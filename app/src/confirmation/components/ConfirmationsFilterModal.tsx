@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import type { Tables } from '~/types/database.types'
+import { useFetchBacentas } from '~/src/bacenta/useFetchBacentas'
 
 type Member = Tables<'members'>
 
@@ -13,6 +14,10 @@ export function ConfirmationsFilterModal({
 }: ConfirmationsFilterModalProps) {
     const navigate = useNavigate()
     const location = useLocation()
+
+    const { data: bacentas } = useFetchBacentas({
+        orderBy: { column: 'name', ascending: true },
+    })
 
     const params = new URLSearchParams(location.search)
     const initialFrom = params.get('from') ?? ''
@@ -42,6 +47,47 @@ export function ConfirmationsFilterModal({
         setSelectedMemberIds((prev) =>
             prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
         )
+    }
+
+    const grouped = useMemo(() => {
+        const map = new Map<string | null, Member[]>()
+        for (const m of members) {
+            const key = (m.bacenta_id as string | null) ?? null
+            const list = map.get(key) ?? []
+            list.push(m)
+            map.set(key, list)
+        }
+        // sort members by name in each group
+        for (const [, arr] of map) {
+            arr.sort((a, b) => {
+                const an = a.full_name ?? `${a.first_name} ${a.last_name}`
+                const bn = b.full_name ?? `${b.first_name} ${b.last_name}`
+                return an.localeCompare(bn)
+            })
+        }
+        return map
+    }, [members])
+
+    const bacentaName = (id: string | null) => {
+        if (id === null) return 'No bacenta'
+        const found = (bacentas ?? []).find((b) => b.id === id)
+        return found?.name ?? 'Unknown'
+    }
+
+    function toggleBacenta(id: string | null) {
+        const ids = (grouped.get(id) ?? []).map((m) => m.id)
+        setSelectedMemberIds((prev) => {
+            const set = new Set(prev)
+            const allSelected = ids.every((x) => set.has(x))
+            if (allSelected) {
+                // deselect all
+                ids.forEach((x) => set.delete(x))
+            } else {
+                // select all
+                ids.forEach((x) => set.add(x))
+            }
+            return Array.from(set)
+        })
     }
 
     function close() {
@@ -118,35 +164,84 @@ export function ConfirmationsFilterModal({
                         <label className="block text-xs font-medium">
                             By members
                         </label>
-                        <div className="mt-1 max-h-56 overflow-auto rounded-md border border-neutral-300 p-2 dark:border-neutral-700">
-                            <ul className="space-y-1">
-                                {members.map((m) => {
-                                    const id = m.id
-                                    const name =
-                                        m.full_name ??
-                                        `${m.first_name} ${m.last_name}`
-                                    const checked =
-                                        selectedMemberIds.includes(id)
-                                    return (
-                                        <li
-                                            key={id}
-                                            className="flex items-center gap-2 text-sm"
-                                        >
-                                            <input
-                                                id={`m-${id}`}
-                                                type="checkbox"
-                                                checked={checked}
-                                                onChange={() =>
-                                                    toggleMember(id)
-                                                }
-                                            />
-                                            <label htmlFor={`m-${id}`}>
-                                                {name}
-                                            </label>
-                                        </li>
+                        <div className="mt-1 max-h-72 overflow-auto rounded-md border border-neutral-300 p-2 dark:border-neutral-700">
+                            <div className="space-y-3">
+                                {Array.from(grouped.entries())
+                                    .sort((a, b) =>
+                                        bacentaName(a[0]).localeCompare(
+                                            bacentaName(b[0])
+                                        )
                                     )
-                                })}
-                            </ul>
+                                    .map(([bid, list]) => {
+                                        const ids = list.map((m) => m.id)
+                                        const allSelected = ids.every((x) =>
+                                            selectedMemberIds.includes(x)
+                                        )
+                                        const someSelected =
+                                            !allSelected &&
+                                            ids.some((x) =>
+                                                selectedMemberIds.includes(x)
+                                            )
+                                        return (
+                                            <div key={bid ?? 'null'}>
+                                                <div className="mb-1 flex items-center justify-between">
+                                                    <div className="text-xs font-medium">
+                                                        {bacentaName(bid)}
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            toggleBacenta(bid)
+                                                        }
+                                                        className="rounded-md border border-neutral-300 px-2 py-0.5 text-xs hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                                                    >
+                                                        {allSelected
+                                                            ? 'Clear'
+                                                            : someSelected
+                                                              ? 'Select all'
+                                                              : 'Select all'}
+                                                    </button>
+                                                </div>
+                                                <ul className="space-y-1 pl-2">
+                                                    {list.map((m) => {
+                                                        const id = m.id
+                                                        const name =
+                                                            m.full_name ??
+                                                            `${m.first_name} ${m.last_name}`
+                                                        const checked =
+                                                            selectedMemberIds.includes(
+                                                                id
+                                                            )
+                                                        return (
+                                                            <li
+                                                                key={id}
+                                                                className="flex items-center gap-2 text-sm"
+                                                            >
+                                                                <input
+                                                                    id={`m-${id}`}
+                                                                    type="checkbox"
+                                                                    checked={
+                                                                        checked
+                                                                    }
+                                                                    onChange={() =>
+                                                                        toggleMember(
+                                                                            id
+                                                                        )
+                                                                    }
+                                                                />
+                                                                <label
+                                                                    htmlFor={`m-${id}`}
+                                                                >
+                                                                    {name}
+                                                                </label>
+                                                            </li>
+                                                        )
+                                                    })}
+                                                </ul>
+                                            </div>
+                                        )
+                                    })}
+                            </div>
                         </div>
                     </div>
                 </div>

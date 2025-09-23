@@ -116,9 +116,21 @@ export default function Index() {
 
                         {/* Recent confirmations */}
                         <section className="mt-6 rounded-md border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-                            <h2 className="text-base font-semibold">
-                                Recent confirmations
-                            </h2>
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-base font-semibold">
+                                    Recent confirmations
+                                </h2>
+                                {member && (
+                                    <LinkButton
+                                        text="See all"
+                                        onPress={() =>
+                                            navigate(
+                                                `/confirmations?members=${member.id}`
+                                            )
+                                        }
+                                    />
+                                )}
+                            </div>
                             {!event || !member ? (
                                 <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
                                     Select an event and member to see
