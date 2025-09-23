@@ -72,7 +72,7 @@ export function CumulativeConfirmationsChart({
             <div className="mb-2 text-sm font-semibold text-neutral-700 dark:text-neutral-200">
                 Cumulative Total Confirmations
             </div>
-            <div className="h-56 w-full">
+            <div className="h-56 w-full text-neutral-800 dark:text-neutral-100">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                         data={chartData}

@@ -53,12 +53,16 @@ export function ConfirmationsByBacentaBarChart({
         })
         .sort((a, b) => b.pct - a.pct)
 
+    const isDark =
+        typeof document !== 'undefined' &&
+        document.documentElement.classList.contains('dark')
+
     return (
         <div>
             <div className="mb-2 text-sm font-semibold text-neutral-700 dark:text-neutral-200">
                 Confirmations by Bacenta
             </div>
-            <div className="h-64 w-full">
+            <div className="h-64 w-full text-neutral-800 dark:text-neutral-100">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         data={chartData}
@@ -66,7 +70,7 @@ export function ConfirmationsByBacentaBarChart({
                     >
                         <XAxis
                             dataKey="name"
-                            tick={{ fontSize: 12 }}
+                            tick={{ fontSize: 12, fill: 'currentColor' }}
                             axisLine={false}
                             tickLine={false}
                             angle={-30}
@@ -75,7 +79,7 @@ export function ConfirmationsByBacentaBarChart({
                             height={40}
                         />
                         <YAxis
-                            tick={{ fontSize: 12 }}
+                            tick={{ fontSize: 12, fill: 'currentColor' }}
                             axisLine={false}
                             tickLine={false}
                             width={44}
@@ -83,8 +87,20 @@ export function ConfirmationsByBacentaBarChart({
                             tickFormatter={(v: number) => `${v}%`}
                         />
                         <Tooltip
-                            cursor={{ fill: 'rgba(0,0,0,0.05)' }}
-                            contentStyle={{ fontSize: 12, borderRadius: 6 }}
+                            cursor={{
+                                fill: isDark
+                                    ? 'rgba(255,255,255,0.06)'
+                                    : 'rgba(0,0,0,0.05)',
+                            }}
+                            contentStyle={{
+                                fontSize: 12,
+                                borderRadius: 6,
+                                backgroundColor: isDark
+                                    ? 'rgba(17,24,39,0.95)'
+                                    : 'rgba(255,255,255,0.95)',
+                                color: isDark ? '#e5e7eb' : '#111827',
+                                border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'}`,
+                            }}
                             formatter={(
                                 value: number,
                                 _name: string,
