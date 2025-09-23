@@ -4,10 +4,12 @@ type Confirmation = Tables<'confirmations'>
 
 export type ConfirmationListItemProps = {
     confirmation: Confirmation
+    byline?: string
 }
 
 export function ConfirmationListItem({
     confirmation,
+    byline,
 }: ConfirmationListItemProps) {
     const fullName = confirmation.last_name
         ? `${confirmation.first_name} ${confirmation.last_name}`
@@ -26,6 +28,9 @@ export function ConfirmationListItem({
                     <div className="text-xs text-neutral-500">
                         {confirmation.contact_number}
                     </div>
+                ) : null}
+                {byline ? (
+                    <div className="text-xs text-neutral-500">{byline}</div>
                 ) : null}
                 <div className="text-xs text-neutral-500">{createdLabel}</div>
             </div>
