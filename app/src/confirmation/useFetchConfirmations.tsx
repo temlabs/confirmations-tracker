@@ -30,7 +30,9 @@ export type ConfirmationsFilter = {
     range?: {
         created_at?: { gte?: string; lte?: string }
     }
-    orderBy?: { column: keyof Confirmation; ascending?: boolean }
+    orderBy?:
+        | { column: keyof Confirmation; ascending?: boolean }
+        | Array<{ column: keyof Confirmation; ascending?: boolean }>
     limit?: number
 }
 
@@ -84,8 +86,12 @@ export function useFetchConfirmations(
             }
 
             if (filters?.orderBy) {
-                const { column, ascending = true } = filters.orderBy
-                query = query.order(column as string, { ascending })
+                const orderBys = Array.isArray(filters.orderBy)
+                    ? filters.orderBy
+                    : [filters.orderBy]
+                for (const { column, ascending = true } of orderBys) {
+                    query = query.order(column as string, { ascending })
+                }
             }
 
             if (typeof filters?.limit === 'number') {
