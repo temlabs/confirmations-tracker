@@ -5,11 +5,13 @@ type Confirmation = Tables<'confirmations'>
 export type ConfirmationListItemProps = {
     confirmation: Confirmation
     byline?: string
+    onPress?: () => void
 }
 
 export function ConfirmationListItem({
     confirmation,
     byline,
+    onPress,
 }: ConfirmationListItemProps) {
     const fullName = confirmation.last_name
         ? `${confirmation.first_name} ${confirmation.last_name}`
@@ -19,7 +21,19 @@ export function ConfirmationListItem({
     const createdLabel = createdAt.toLocaleString()
 
     return (
-        <li className="flex items-center justify-between gap-3 border-b border-neutral-100 py-2 last:border-b-0 dark:border-neutral-800">
+        <li
+            className="flex cursor-pointer items-center justify-between gap-3 border-b border-neutral-100 py-2 last:border-b-0 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800/60"
+            onClick={onPress}
+            role={onPress ? 'button' : undefined}
+            tabIndex={onPress ? 0 : undefined}
+            onKeyDown={(e) => {
+                if (!onPress) return
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onPress()
+                }
+            }}
+        >
             <div>
                 <div className="text-sm font-medium dark:text-neutral-100">
                     {fullName}

@@ -5,6 +5,7 @@ import { useFetchConfirmations } from '~/src/confirmation/useFetchConfirmations'
 import { ConfirmationListItem } from '~/src/confirmation/components/ConfirmationListItem'
 import { useFetchMembers } from '~/src/member/useFetchMembers'
 import { ConfirmationsFilterModal } from '~/src/confirmation/components/ConfirmationsFilterModal'
+import { EditConfirmationModal } from '~/src/confirmation/components/EditConfirmationModal'
 
 export const meta = () => [{ title: 'All Confirmations' }]
 
@@ -196,6 +197,15 @@ export default function Confirmations() {
                                     key={c.id}
                                     confirmation={c}
                                     byline={`Confirmed by ${memberIdToName.get(c.confirmed_by_member_id) ?? 'Unknown'}`}
+                                    onPress={() => {
+                                        const next = new URLSearchParams(
+                                            location.search
+                                        )
+                                        next.set('edit', c.id)
+                                        navigate({
+                                            search: `?${next.toString()}`,
+                                        })
+                                    }}
                                 />
                             ))}
                         </ul>
@@ -205,6 +215,17 @@ export default function Confirmations() {
                 {showFilters && members && (
                     <ConfirmationsFilterModal members={members} />
                 )}
+
+                {/* Edit modal */}
+                {(() => {
+                    const editId = new URLSearchParams(location.search).get(
+                        'edit'
+                    )
+                    if (!editId) return null
+                    const current = (data ?? []).find((x) => x.id === editId)
+                    if (!current) return null
+                    return <EditConfirmationModal confirmation={current} />
+                })()}
             </div>
         </main>
     )

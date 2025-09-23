@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { useFetchCurrentEvent } from '~/src/event/useFetchCurrentEvent'
 import { useFetchEvents } from '~/src/event/useFetchEvents'
+import { CumulativeConfirmationsChart } from '~/src/components/charts/CumulativeConfirmationsChart'
+import { ConfirmationsByBacentaBarChart } from '~/src/components/charts/ConfirmationsByBacentaBarChart'
 
 export const meta = () => [{ title: 'Event Data' }]
 
@@ -58,6 +60,18 @@ export default function Data() {
                             <p className="mt-4 text-sm text-neutral-600 dark:text-neutral-400">
                                 Attendance target: {attTarget ?? 0}
                             </p>
+                            <div className="mt-6">
+                                <CumulativeConfirmationsChart
+                                    eventId={event.id}
+                                    confirmationsTarget={confTarget}
+                                    attendanceTarget={attTarget}
+                                />
+                            </div>
+                            <div className="mt-8">
+                                <ConfirmationsByBacentaBarChart
+                                    eventId={event.id}
+                                />
+                            </div>
                         </div>
                     )}
                 </section>
