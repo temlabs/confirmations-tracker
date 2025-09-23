@@ -30,19 +30,52 @@ export type EventMemberTargetsFilter = {
 }
 
 type FetchEventMemberTargetsOptions = Omit<
-    UseQueryOptions<EventMemberTarget[], Error, EventMemberTarget[], QueryKey>,
+    UseQueryOptions<
+        (EventMemberTarget & {
+            bacenta_name?: string | null
+            member_full_name?: string | null
+        })[],
+        Error,
+        (EventMemberTarget & {
+            bacenta_name?: string | null
+            member_full_name?: string | null
+        })[],
+        QueryKey
+    >,
     'queryKey' | 'queryFn'
->
+> & {
+    includeBacentaName?: boolean
+}
 
 export function useFetchEventMembers(
     filters?: EventMemberTargetsFilter,
     config?: FetchEventMemberTargetsOptions
-): UseQueryResult<EventMemberTarget[], Error> {
-    return useQuery<EventMemberTarget[], Error, EventMemberTarget[], QueryKey>({
+): UseQueryResult<
+    (EventMemberTarget & {
+        bacenta_name?: string | null
+        member_full_name?: string | null
+    })[],
+    Error
+> {
+    return useQuery<
+        (EventMemberTarget & {
+            bacenta_name?: string | null
+            member_full_name?: string | null
+        })[],
+        Error,
+        (EventMemberTarget & {
+            bacenta_name?: string | null
+            member_full_name?: string | null
+        })[],
+        QueryKey
+    >({
         queryKey: ['event_member_targets', filters ?? null],
         queryFn: async () => {
             const supabase = getSupabaseBrowserClient()
-            let query = supabase.from('event_member_targets').select('*')
+            const select = config?.includeBacentaName
+                ? '*, members(id, full_name, first_name, last_name, bacenta_id, bacentas(id, name))'
+                : '*'
+            let query = supabase.from('event_member_targets').select(select)
 
             if (filters?.equals) {
                 for (const [key, value] of Object.entries(filters.equals)) {
@@ -83,8 +116,20 @@ export function useFetchEventMembers(
 
             const { data, error } = await query
             if (error) throw error
-
-            return data ?? []
+            if (!data) return []
+            if (!config?.includeBacentaName)
+                return data as unknown as (EventMemberTarget & {
+                    bacenta_name?: string | null
+                    member_full_name?: string | null
+                })[]
+            const mapped = (data as unknown as Array<any>).map((row) => ({
+                ...(row as EventMemberTarget),
+                member_full_name:
+                    row?.members?.full_name ??
+                    `${row?.members?.first_name ?? ''} ${row?.members?.last_name ?? ''}`.trim(),
+                bacenta_name: row?.members?.bacentas?.name ?? null,
+            }))
+            return mapped
         },
         ...config,
     })
