@@ -160,6 +160,13 @@ export type Database = {
             foreignKeyName: "confirmations_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_cumulative_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "confirmations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -216,6 +223,13 @@ export type Database = {
             foreignKeyName: "event_member_targets_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_cumulative_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_member_targets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -235,8 +249,10 @@ export type Database = {
           id: string
           name: string
           overall_attendee_target: number | null
+          total_attendance_target: number
           total_attendees: number
           total_confirmations: number
+          total_confirmations_target: number
           updated_at: string
         }
         Insert: {
@@ -245,8 +261,10 @@ export type Database = {
           id?: string
           name: string
           overall_attendee_target?: number | null
+          total_attendance_target?: number
           total_attendees?: number
           total_confirmations?: number
+          total_confirmations_target?: number
           updated_at?: string
         }
         Update: {
@@ -255,8 +273,10 @@ export type Database = {
           id?: string
           name?: string
           overall_attendee_target?: number | null
+          total_attendance_target?: number
           total_attendees?: number
           total_confirmations?: number
+          total_confirmations_target?: number
           updated_at?: string
         }
         Relationships: []
@@ -454,6 +474,13 @@ export type Database = {
             foreignKeyName: "event_member_targets_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_cumulative_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_member_targets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -465,6 +492,14 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      event_cumulative_view: {
+        Row: {
+          cumulative_confirmations: number | null
+          day: string | null
+          event_id: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
