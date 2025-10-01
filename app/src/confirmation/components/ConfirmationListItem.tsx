@@ -17,6 +17,7 @@ export function ConfirmationListItem({
         ? `${confirmation.first_name} ${confirmation.last_name}`
         : confirmation.first_name
     const attended = confirmation.attended
+    const isFirstTime = confirmation.is_first_time
     const createdAt = new Date(confirmation.created_at)
     const createdLabel = createdAt.toLocaleString()
 
@@ -48,17 +49,17 @@ export function ConfirmationListItem({
                 ) : null}
                 <div className="text-xs text-neutral-500">{createdLabel}</div>
             </div>
-            <div>
-                <span
-                    className={
-                        'rounded-full px-2 py-0.5 text-xs ' +
-                        (attended
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                            : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300')
-                    }
-                >
-                    {attended ? 'Attended' : 'Confirmed'}
-                </span>
+            <div className="flex gap-1">
+                {isFirstTime && (
+                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                        First timer
+                    </span>
+                )}
+                {attended && (
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                        Attended
+                    </span>
+                )}
             </div>
         </li>
     )

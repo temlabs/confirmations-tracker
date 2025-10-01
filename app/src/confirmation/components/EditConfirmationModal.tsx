@@ -32,6 +32,7 @@ export function EditConfirmationModal({
         const contact_number =
             String(formData.get('contact_number') || '').trim() || null
         const attended = formData.get('attended') === 'on'
+        const is_first_time = formData.get('is_first_time') === 'on'
         if (!first_name) return
         try {
             const updates: TablesUpdate<'confirmations'> = {
@@ -39,6 +40,7 @@ export function EditConfirmationModal({
                 last_name,
                 contact_number,
                 attended,
+                is_first_time,
             }
             await updateAsync({ id: confirmation.id, updates })
             close()
@@ -116,16 +118,29 @@ export function EditConfirmationModal({
                             className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
                         />
                     </div>
-                    <div className="flex items-center gap-2">
-                        <input
-                            id="attended"
-                            name="attended"
-                            type="checkbox"
-                            defaultChecked={confirmation.attended}
-                        />
-                        <label htmlFor="attended" className="text-sm">
-                            Attended
-                        </label>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <input
+                                id="attended"
+                                name="attended"
+                                type="checkbox"
+                                defaultChecked={confirmation.attended}
+                            />
+                            <label htmlFor="attended" className="text-sm">
+                                Attended
+                            </label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                id="is_first_time"
+                                name="is_first_time"
+                                type="checkbox"
+                                defaultChecked={confirmation.is_first_time}
+                            />
+                            <label htmlFor="is_first_time" className="text-sm">
+                                First timer?
+                            </label>
+                        </div>
                     </div>
                     <div className="flex justify-between gap-2 pt-2">
                         <button

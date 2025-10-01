@@ -26,6 +26,7 @@ export function AddConfirmationModal({
         const lastName = String(formData.get('last_name') || '').trim() || null
         const contact =
             String(formData.get('contact_number') || '').trim() || null
+        const is_first_time = formData.get('is_first_time') === 'on'
         if (!firstName) return
         try {
             await mutateAsync({
@@ -34,6 +35,7 @@ export function AddConfirmationModal({
                 first_name: firstName,
                 last_name: lastName,
                 contact_number: contact,
+                is_first_time,
             })
             close()
         } catch {}
@@ -102,6 +104,16 @@ export function AddConfirmationModal({
                             placeholder="e.g. +233..."
                             inputMode="tel"
                         />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <input
+                            id="is_first_time"
+                            name="is_first_time"
+                            type="checkbox"
+                        />
+                        <label htmlFor="is_first_time" className="text-sm">
+                            First timer?
+                        </label>
                     </div>
                     <div className="flex justify-end gap-2 pt-2">
                         <button

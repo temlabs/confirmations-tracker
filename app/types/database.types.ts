@@ -126,6 +126,7 @@ export type Database = {
           event_id: string
           first_name: string
           id: string
+          is_first_time: boolean
           last_name: string | null
         }
         Insert: {
@@ -136,6 +137,7 @@ export type Database = {
           event_id: string
           first_name: string
           id?: string
+          is_first_time?: boolean
           last_name?: string | null
         }
         Update: {
@@ -146,6 +148,7 @@ export type Database = {
           event_id?: string
           first_name?: string
           id?: string
+          is_first_time?: boolean
           last_name?: string | null
         }
         Relationships: [
@@ -201,6 +204,7 @@ export type Database = {
           member_id: string
           total_attendees: number
           total_confirmations: number
+          total_first_timers: number
         }
         Insert: {
           attendance_target?: number | null
@@ -209,6 +213,7 @@ export type Database = {
           member_id: string
           total_attendees?: number
           total_confirmations?: number
+          total_first_timers?: number
         }
         Update: {
           attendance_target?: number | null
@@ -217,6 +222,7 @@ export type Database = {
           member_id?: string
           total_attendees?: number
           total_confirmations?: number
+          total_first_timers?: number
         }
         Relationships: [
           {
@@ -253,6 +259,7 @@ export type Database = {
           total_attendees: number
           total_confirmations: number
           total_confirmations_target: number
+          total_first_timers: number
           updated_at: string
         }
         Insert: {
@@ -265,6 +272,7 @@ export type Database = {
           total_attendees?: number
           total_confirmations?: number
           total_confirmations_target?: number
+          total_first_timers?: number
           updated_at?: string
         }
         Update: {
@@ -277,6 +285,7 @@ export type Database = {
           total_attendees?: number
           total_confirmations?: number
           total_confirmations_target?: number
+          total_first_timers?: number
           updated_at?: string
         }
         Relationships: []
@@ -468,6 +477,7 @@ export type Database = {
           event_id: string | null
           total_attendees: number | null
           total_confirmations: number | null
+          total_first_timers: number | null
         }
         Relationships: [
           {
@@ -496,6 +506,7 @@ export type Database = {
       event_cumulative_view: {
         Row: {
           cumulative_confirmations: number | null
+          cumulative_first_timers: number | null
           day: string | null
           event_id: string | null
         }
