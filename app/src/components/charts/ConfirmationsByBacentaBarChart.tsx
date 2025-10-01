@@ -45,11 +45,30 @@ export function ConfirmationsByBacentaBarChart({
             const name = (r as any).bacenta_name ?? 'Unknown'
             const target = r.confirmations_target ?? 0
             const total = r.total_confirmations ?? 0
+            const firstTimers = r.total_first_timers ?? 0
+            const nonFirstTimers = total - firstTimers
             const pct =
                 target > 0
                     ? Math.min(100, Math.round((total / target) * 100))
                     : 0
-            return { name, pct, total, target }
+            const firstTimersPct =
+                target > 0
+                    ? Math.min(100, Math.round((firstTimers / target) * 100))
+                    : 0
+            const nonFirstTimersPct =
+                target > 0
+                    ? Math.min(100, Math.round((nonFirstTimers / target) * 100))
+                    : 0
+            return {
+                name,
+                pct,
+                total,
+                target,
+                firstTimers,
+                nonFirstTimers,
+                firstTimersPct,
+                nonFirstTimersPct,
+            }
         })
         .sort((a, b) => b.pct - a.pct)
 
@@ -60,7 +79,7 @@ export function ConfirmationsByBacentaBarChart({
     return (
         <div>
             <div className="mb-2 text-sm font-semibold text-neutral-700 dark:text-neutral-200">
-                Confirmations by Bacenta
+                Confirmations by Bacenta (First Timers vs Returning)
             </div>
             <div className="h-64 w-full text-neutral-800 dark:text-neutral-100">
                 <ResponsiveContainer width="100%" height="100%">
@@ -101,28 +120,50 @@ export function ConfirmationsByBacentaBarChart({
                                 color: isDark ? '#e5e7eb' : '#111827',
                                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'}`,
                             }}
-                            formatter={(
-                                value: number,
-                                _name: string,
-                                props
-                            ) => {
+                            formatter={(value: number, name: string, props) => {
                                 const payload = props?.payload as
                                     | {
                                           total: number
                                           target: number
                                           pct: number
+                                          firstTimers: number
+                                          nonFirstTimers: number
+                                          firstTimersPct: number
+                                          nonFirstTimersPct: number
                                       }
                                     | undefined
                                 if (!payload) return [`${value}%`, '']
+
+                                if (name === 'firstTimersPct') {
+                                    return [
+                                        `${payload.firstTimers}`,
+                                        'First timers',
+                                    ]
+                                } else if (name === 'nonFirstTimersPct') {
+                                    return [
+                                        `${payload.nonFirstTimers}`,
+                                        'Returning',
+                                    ]
+                                }
+
                                 return [
-                                    `${payload.pct}%`,
-                                    `${payload.total}/${payload.target}`,
+                                    `${payload.total}/${payload.target} (${payload.pct}%)`,
+                                    'Total confirmations',
                                 ]
                             }}
                             labelFormatter={(label: string) => label}
                             separator={' • '}
                         />
-                        <Bar dataKey="pct" fill="#2563eb">
+                        <Bar
+                            dataKey="firstTimersPct"
+                            stackId="a"
+                            fill="#f97316"
+                        />
+                        <Bar
+                            dataKey="nonFirstTimersPct"
+                            stackId="a"
+                            fill="#1d4ed8"
+                        >
                             <LabelList
                                 dataKey="total"
                                 position="top"

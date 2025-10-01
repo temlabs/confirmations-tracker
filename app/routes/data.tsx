@@ -30,6 +30,7 @@ export default function Data() {
     const confTarget = current?.total_confirmations_target ?? 0
     const attTotal = current?.total_attendees ?? 0
     const attTarget = current?.total_attendance_target ?? 0
+    const firstTimersTotal = current?.total_first_timers ?? 0
 
     return (
         <main className="min-h-[100svh] px-4 py-8">
@@ -56,6 +57,7 @@ export default function Data() {
                                     total={confTotal}
                                     target={confTarget}
                                 />
+                                <FirstTimersCard total={firstTimersTotal} />
                             </div>
                             <p className="mt-4 text-sm text-neutral-600 dark:text-neutral-400">
                                 Attendance target: {attTarget ?? 0}
@@ -128,6 +130,17 @@ function MetricCard({
                     </div>
                 </div>
             )}
+        </div>
+    )
+}
+
+function FirstTimersCard({ total }: { total: number }) {
+    return (
+        <div className="rounded-md p-4 text-left">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                Total first timers confirmed
+            </p>
+            <div className="mt-1 text-4xl font-bold">{total}</div>
         </div>
     )
 }
