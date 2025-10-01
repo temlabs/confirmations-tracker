@@ -22,6 +22,7 @@ export function ConfirmationsFilterModal({
     const params = new URLSearchParams(location.search)
     const initialFrom = params.get('from') ?? ''
     const initialTo = params.get('to') ?? ''
+    const initialFirstTimer = params.get('first_timer') ?? ''
     const initialMembersCsv = params.get('members') ?? ''
     const initialSelected = useMemo(
         () =>
@@ -33,12 +34,14 @@ export function ConfirmationsFilterModal({
 
     const [from, setFrom] = useState(initialFrom)
     const [to, setTo] = useState(initialTo)
+    const [firstTimer, setFirstTimer] = useState(initialFirstTimer)
     const [selectedMemberIds, setSelectedMemberIds] =
         useState<string[]>(initialSelected)
 
     useEffect(() => {
         setFrom(initialFrom)
         setTo(initialTo)
+        setFirstTimer(initialFirstTimer)
         setSelectedMemberIds(initialSelected)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.search])
@@ -102,6 +105,8 @@ export function ConfirmationsFilterModal({
         else next.delete('from')
         if (to) next.set('to', to)
         else next.delete('to')
+        if (firstTimer) next.set('first_timer', firstTimer)
+        else next.delete('first_timer')
         if (selectedMemberIds.length > 0)
             next.set('members', selectedMemberIds.join(','))
         else next.delete('members')
@@ -112,6 +117,7 @@ export function ConfirmationsFilterModal({
     function clearAll() {
         setFrom('')
         setTo('')
+        setFirstTimer('')
         setSelectedMemberIds([])
     }
 
@@ -158,6 +164,21 @@ export function ConfirmationsFilterModal({
                                 className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
                             />
                         </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium">
+                            First timer status
+                        </label>
+                        <select
+                            value={firstTimer}
+                            onChange={(e) => setFirstTimer(e.target.value)}
+                            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+                        >
+                            <option value="">All</option>
+                            <option value="true">First timers only</option>
+                            <option value="false">Returning only</option>
+                        </select>
                     </div>
 
                     <div>

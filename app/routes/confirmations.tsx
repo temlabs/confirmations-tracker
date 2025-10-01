@@ -31,6 +31,7 @@ export default function Confirmations() {
     const memberIds = membersCsv ? membersCsv.split(',').filter(Boolean) : []
     const from = params.get('from') || undefined
     const to = params.get('to') || undefined
+    const firstTimer = params.get('first_timer') || undefined
     const sort = params.get('sort') || 'time_desc'
     const showFilters = params.get('filters') === '1'
 
@@ -74,6 +75,10 @@ export default function Confirmations() {
                                     ...(to ? { lte: to } : {}),
                                 },
                             }
+                          : undefined,
+                  equals:
+                      firstTimer !== undefined
+                          ? { is_first_time: firstTimer === 'true' }
                           : undefined,
                   orderBy,
                   limit: 200,
@@ -139,6 +144,17 @@ export default function Confirmations() {
                                 onClear={() => setParam('to', null)}
                             />
                         ) : null}
+                        {firstTimer === 'true' ? (
+                            <Chip
+                                label="First timers only"
+                                onClear={() => setParam('first_timer', null)}
+                            />
+                        ) : firstTimer === 'false' ? (
+                            <Chip
+                                label="Returning only"
+                                onClear={() => setParam('first_timer', null)}
+                            />
+                        ) : null}
                         {memberIds.map((id) => (
                             <Chip
                                 key={id}
@@ -164,6 +180,7 @@ export default function Confirmations() {
                         ) : null}
                         {!from &&
                         !to &&
+                        !firstTimer &&
                         !memberIds.length &&
                         sort === 'time_desc' ? (
                             <span className="text-xs text-neutral-500">
@@ -191,24 +208,30 @@ export default function Confirmations() {
                             No confirmations yet.
                         </p>
                     ) : (
-                        <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                            {data!.map((c) => (
-                                <ConfirmationListItem
-                                    key={c.id}
-                                    confirmation={c}
-                                    byline={`Confirmed by ${memberIdToName.get(c.confirmed_by_member_id) ?? 'Unknown'}`}
-                                    onPress={() => {
-                                        const next = new URLSearchParams(
-                                            location.search
-                                        )
-                                        next.set('edit', c.id)
-                                        navigate({
-                                            search: `?${next.toString()}`,
-                                        })
-                                    }}
-                                />
-                            ))}
-                        </ul>
+                        <div>
+                            <div className="mb-3 text-sm text-neutral-600 dark:text-neutral-400">
+                                {data!.length} confirmation
+                                {data!.length !== 1 ? 's' : ''}
+                            </div>
+                            <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                                {data!.map((c) => (
+                                    <ConfirmationListItem
+                                        key={c.id}
+                                        confirmation={c}
+                                        byline={`Confirmed by ${memberIdToName.get(c.confirmed_by_member_id) ?? 'Unknown'}`}
+                                        onPress={() => {
+                                            const next = new URLSearchParams(
+                                                location.search
+                                            )
+                                            next.set('edit', c.id)
+                                            navigate({
+                                                search: `?${next.toString()}`,
+                                            })
+                                        }}
+                                    />
+                                ))}
+                            </ul>
+                        </div>
                     )}
                 </section>
 
