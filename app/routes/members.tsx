@@ -6,6 +6,7 @@ import { useFetchMembers } from '~/src/member/useFetchMembers'
 import { MemberListItem } from '~/src/member/components/MemberListItem'
 import { useFetchConfirmations } from '~/src/confirmation/useFetchConfirmations'
 import { MembersFilterModal } from '~/src/member/components/MembersFilterModal'
+import type { Tables } from '~/types/database.types'
 
 export const meta = () => [{ title: 'Members' }]
 
@@ -264,6 +265,11 @@ export default function Members() {
                                     totalConfirmations={r.total}
                                     confirmationsTarget={r.target}
                                     lastConfirmationAt={r.last}
+                                    onPress={() => {
+                                        navigate(
+                                            `/confirmations?members=${r.id}`
+                                        )
+                                    }}
                                 />
                             ))}
                         </ul>

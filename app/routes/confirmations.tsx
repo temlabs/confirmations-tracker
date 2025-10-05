@@ -62,6 +62,9 @@ export default function Confirmations() {
             ? {
                   equals: {
                       event_id: event.id,
+                      ...(firstTimer !== undefined
+                          ? { is_first_time: firstTimer === 'true' }
+                          : {}),
                   },
                   in:
                       memberIds.length > 0
@@ -75,10 +78,6 @@ export default function Confirmations() {
                                     ...(to ? { lte: to } : {}),
                                 },
                             }
-                          : undefined,
-                  equals:
-                      firstTimer !== undefined
-                          ? { is_first_time: firstTimer === 'true' }
                           : undefined,
                   orderBy,
                   limit: 200,

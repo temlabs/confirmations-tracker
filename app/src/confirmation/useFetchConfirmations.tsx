@@ -20,6 +20,7 @@ export type ConfirmationsFilter = {
             | 'last_name'
             | 'contact_number'
             | 'attended'
+            | 'is_first_time'
             | 'created_at'
         >
     >
