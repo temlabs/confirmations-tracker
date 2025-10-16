@@ -23,6 +23,7 @@ export function ConfirmationsFilterModal({
     const initialFrom = params.get('from') ?? ''
     const initialTo = params.get('to') ?? ''
     const initialFirstTimer = params.get('first_timer') ?? ''
+    const initialAttended = params.get('attended') ?? ''
     const initialMembersCsv = params.get('members') ?? ''
     const initialSelected = useMemo(
         () =>
@@ -35,6 +36,7 @@ export function ConfirmationsFilterModal({
     const [from, setFrom] = useState(initialFrom)
     const [to, setTo] = useState(initialTo)
     const [firstTimer, setFirstTimer] = useState(initialFirstTimer)
+    const [attended, setAttended] = useState(initialAttended)
     const [selectedMemberIds, setSelectedMemberIds] =
         useState<string[]>(initialSelected)
 
@@ -42,6 +44,7 @@ export function ConfirmationsFilterModal({
         setFrom(initialFrom)
         setTo(initialTo)
         setFirstTimer(initialFirstTimer)
+        setAttended(initialAttended)
         setSelectedMemberIds(initialSelected)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.search])
@@ -107,6 +110,8 @@ export function ConfirmationsFilterModal({
         else next.delete('to')
         if (firstTimer) next.set('first_timer', firstTimer)
         else next.delete('first_timer')
+        if (attended) next.set('attended', attended)
+        else next.delete('attended')
         if (selectedMemberIds.length > 0)
             next.set('members', selectedMemberIds.join(','))
         else next.delete('members')
@@ -118,6 +123,7 @@ export function ConfirmationsFilterModal({
         setFrom('')
         setTo('')
         setFirstTimer('')
+        setAttended('')
         setSelectedMemberIds([])
     }
 
@@ -178,6 +184,21 @@ export function ConfirmationsFilterModal({
                             <option value="">All</option>
                             <option value="true">First timers only</option>
                             <option value="false">Returning only</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium">
+                            Attendance status
+                        </label>
+                        <select
+                            value={attended}
+                            onChange={(e) => setAttended(e.target.value)}
+                            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+                        >
+                            <option value="">All</option>
+                            <option value="true">Attended only</option>
+                            <option value="false">Did not attend</option>
                         </select>
                     </div>
 

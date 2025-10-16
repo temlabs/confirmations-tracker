@@ -88,6 +88,7 @@ export default function App() {
                         to="/confirmations"
                         label="View All Confirmations"
                     />
+                    <NavItem to="/live" label="Live Attendance" />
                     <NavItem to="/data" label="Data" />
                     <NavItem to="/members" label="Members" />
                 </nav>
@@ -123,6 +124,11 @@ export default function App() {
                             <NavItem
                                 to="/confirmations"
                                 label="View All Confirmations"
+                                onNavigate={() => setIsDrawerOpen(false)}
+                            />
+                            <NavItem
+                                to="/live"
+                                label="Live Attendance"
                                 onNavigate={() => setIsDrawerOpen(false)}
                             />
                             <NavItem

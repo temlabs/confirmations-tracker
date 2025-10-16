@@ -32,6 +32,7 @@ export default function Confirmations() {
     const from = params.get('from') || undefined
     const to = params.get('to') || undefined
     const firstTimer = params.get('first_timer') || undefined
+    const attended = params.get('attended') || undefined
     const sort = params.get('sort') || 'time_desc'
     const showFilters = params.get('filters') === '1'
 
@@ -64,6 +65,9 @@ export default function Confirmations() {
                       event_id: event.id,
                       ...(firstTimer !== undefined
                           ? { is_first_time: firstTimer === 'true' }
+                          : {}),
+                      ...(attended !== undefined
+                          ? { attended: attended === 'true' }
                           : {}),
                   },
                   in:
@@ -154,6 +158,17 @@ export default function Confirmations() {
                                 onClear={() => setParam('first_timer', null)}
                             />
                         ) : null}
+                        {attended === 'true' ? (
+                            <Chip
+                                label="Attended only"
+                                onClear={() => setParam('attended', null)}
+                            />
+                        ) : attended === 'false' ? (
+                            <Chip
+                                label="Did not attend"
+                                onClear={() => setParam('attended', null)}
+                            />
+                        ) : null}
                         {memberIds.map((id) => (
                             <Chip
                                 key={id}
@@ -180,6 +195,7 @@ export default function Confirmations() {
                         {!from &&
                         !to &&
                         !firstTimer &&
+                        !attended &&
                         !memberIds.length &&
                         sort === 'time_desc' ? (
                             <span className="text-xs text-neutral-500">

@@ -9,6 +9,7 @@ import { useFetchEventMembers } from '~/src/event/useFetchEventMembers'
 import { AddConfirmationModal } from '~/src/confirmation/components/AddConfirmationModal'
 import { useFetchConfirmations } from '~/src/confirmation/useFetchConfirmations'
 import { ConfirmationListItem } from '~/src/confirmation/components/ConfirmationListItem'
+import { EditConfirmationModal } from '~/src/confirmation/components/EditConfirmationModal'
 
 import { HeroButton } from '~/src/components/heroButton/HeroButton'
 import { LinkButton } from '~/src/components/linkButton/LinkButton'
@@ -154,11 +155,36 @@ export default function Index() {
                                         <ConfirmationListItem
                                             key={c.id}
                                             confirmation={c}
+                                            onPress={() => {
+                                                const next =
+                                                    new URLSearchParams(
+                                                        location.search
+                                                    )
+                                                next.set('edit', c.id)
+                                                navigate({
+                                                    search: `?${next.toString()}`,
+                                                })
+                                            }}
                                         />
                                     ))}
                                 </ul>
                             )}
                         </section>
+
+                        {/* Edit modal */}
+                        {(() => {
+                            const editId = new URLSearchParams(
+                                location.search
+                            ).get('edit')
+                            if (!editId) return null
+                            const current = (recentConfirmations ?? []).find(
+                                (x) => x.id === editId
+                            )
+                            if (!current) return null
+                            return (
+                                <EditConfirmationModal confirmation={current} />
+                            )
+                        })()}
 
                         {isAddConfirmationOpen && member && event && (
                             <AddConfirmationModal
