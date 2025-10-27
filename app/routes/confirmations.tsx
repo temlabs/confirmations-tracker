@@ -234,7 +234,10 @@ export default function Confirmations() {
                                         key={c.id}
                                         confirmation={c}
                                         byline={`Confirmed by ${memberIdToName.get(c.confirmed_by_member_id) ?? 'Unknown'}`}
-                                        onPress={() => {
+                                        onPress={() =>
+                                            navigate(`/confirmations/${c.id}`)
+                                        }
+                                        onEdit={() => {
                                             const next = new URLSearchParams(
                                                 location.search
                                             )

@@ -71,6 +71,79 @@ export type Database = {
           },
         ]
       }
+      call_outcomes: {
+        Row: {
+          description: string
+          id: string
+          is_successful: boolean
+        }
+        Insert: {
+          description: string
+          id: string
+          is_successful?: boolean
+        }
+        Update: {
+          description?: string
+          id?: string
+          is_successful?: boolean
+        }
+        Relationships: []
+      }
+      calls: {
+        Row: {
+          call_timestamp: string
+          callee_confirmation_id: string
+          caller_member_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          outcome_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          call_timestamp?: string
+          callee_confirmation_id: string
+          caller_member_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          outcome_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          call_timestamp?: string
+          callee_confirmation_id?: string
+          caller_member_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          outcome_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calls_callee_confirmation_id_fkey"
+            columns: ["callee_confirmation_id"]
+            isOneToOne: false
+            referencedRelation: "confirmations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_caller_member_id_fkey"
+            columns: ["caller_member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_outcome_id_fkey"
+            columns: ["outcome_id"]
+            isOneToOne: false
+            referencedRelation: "call_outcomes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_members: {
         Row: {
           created_at: string
@@ -127,7 +200,11 @@ export type Database = {
           first_name: string
           id: string
           is_first_time: boolean
+          last_contacted_at: string | null
           last_name: string | null
+          last_visited_at: string | null
+          total_calls: number
+          total_visits: number
         }
         Insert: {
           attended?: boolean
@@ -138,7 +215,11 @@ export type Database = {
           first_name: string
           id?: string
           is_first_time?: boolean
+          last_contacted_at?: string | null
           last_name?: string | null
+          last_visited_at?: string | null
+          total_calls?: number
+          total_visits?: number
         }
         Update: {
           attended?: boolean
@@ -149,7 +230,11 @@ export type Database = {
           first_name?: string
           id?: string
           is_first_time?: boolean
+          last_contacted_at?: string | null
           last_name?: string | null
+          last_visited_at?: string | null
+          total_calls?: number
+          total_visits?: number
         }
         Relationships: [
           {
@@ -427,6 +512,99 @@ export type Database = {
           },
         ]
       }
+      visit_visitees: {
+        Row: {
+          confirmation_id: string
+          created_at: string
+          visit_id: string
+        }
+        Insert: {
+          confirmation_id: string
+          created_at?: string
+          visit_id: string
+        }
+        Update: {
+          confirmation_id?: string
+          created_at?: string
+          visit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visit_visitees_confirmation_id_fkey"
+            columns: ["confirmation_id"]
+            isOneToOne: false
+            referencedRelation: "confirmations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visit_visitees_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visit_visitors: {
+        Row: {
+          created_at: string
+          member_id: string
+          visit_id: string
+        }
+        Insert: {
+          created_at?: string
+          member_id: string
+          visit_id: string
+        }
+        Update: {
+          created_at?: string
+          member_id?: string
+          visit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visit_visitors_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visit_visitors_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visits: {
+        Row: {
+          created_at: string
+          id: string
+          location: string | null
+          notes: string | null
+          updated_at: string
+          visit_timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          updated_at?: string
+          visit_timestamp?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          updated_at?: string
+          visit_timestamp?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       campaign_cumulative_view: {
@@ -514,42 +692,9 @@ export type Database = {
       }
     }
     Functions: {
-      gtrgm_compress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_decompress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_options: {
-        Args: { "": unknown }
-        Returns: undefined
-      }
-      gtrgm_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      set_limit: {
-        Args: { "": number }
-        Returns: number
-      }
-      show_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      show_trgm: {
-        Args: { "": string }
-        Returns: string[]
-      }
-      uuid_generate_v7: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      uuid_generate_v7: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

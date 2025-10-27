@@ -6,11 +6,14 @@ import {
     Scripts,
     ScrollRestoration,
     NavLink,
+    useNavigate,
 } from 'react-router'
 import { useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import './app.css'
+import { useFetchCurrentMember } from '~/src/member/useFetchCurrentMember'
+import { useFetchCurrentEvent } from '~/src/event/useFetchCurrentEvent'
 
 export const links = () => [
     { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -49,6 +52,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
     const [queryClient] = useState(() => new QueryClient())
     const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+    const navigate = useNavigate()
+    const { member } = useFetchCurrentMember()
+    const { event } = useFetchCurrentEvent()
+
+    function handleChangeIdentity() {
+        navigate('/identity')
+    }
     return (
         <QueryClientProvider client={queryClient}>
             {/* Mobile top bar */}
@@ -79,6 +89,44 @@ export default function App() {
 
             {/* Desktop sidebar */}
             <aside className="fixed inset-y-0 left-0 hidden w-56 border-r border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900 md:block">
+                <div className="rounded-md border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+                    <div className="text-xs text-neutral-600 dark:text-neutral-400">
+                        You
+                    </div>
+                    <div className="mt-0.5 truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                        {member ? (
+                            <span>
+                                {member.first_name} {member.last_name}
+                            </span>
+                        ) : (
+                            <span className="text-neutral-500 dark:text-neutral-400">
+                                Not selected
+                            </span>
+                        )}
+                    </div>
+                    <div className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
+                        Event
+                    </div>
+                    <div className="mt-0.5 truncate text-sm text-neutral-900 dark:text-neutral-100">
+                        {event ? (
+                            <span>{event.name}</span>
+                        ) : (
+                            <span className="text-neutral-500 dark:text-neutral-400">
+                                None selected
+                            </span>
+                        )}
+                    </div>
+                    <div className="mt-3">
+                        <button
+                            type="button"
+                            onClick={handleChangeIdentity}
+                            className="w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm text-neutral-800 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                        >
+                            Change
+                        </button>
+                    </div>
+                </div>
+                <div className="my-3 h-px bg-neutral-200 dark:bg-neutral-800" />
                 <div className="text-sm font-semibold text-neutral-700 dark:text-neutral-200">
                     Navigation
                 </div>
@@ -115,6 +163,47 @@ export default function App() {
                                 Close
                             </button>
                         </div>
+                        <div className="mb-3 rounded-md border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+                            <div className="text-xs text-neutral-600 dark:text-neutral-400">
+                                You
+                            </div>
+                            <div className="mt-0.5 truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                                {member ? (
+                                    <span>
+                                        {member.first_name} {member.last_name}
+                                    </span>
+                                ) : (
+                                    <span className="text-neutral-500 dark:text-neutral-400">
+                                        Not selected
+                                    </span>
+                                )}
+                            </div>
+                            <div className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
+                                Event
+                            </div>
+                            <div className="mt-0.5 truncate text-sm text-neutral-900 dark:text-neutral-100">
+                                {event ? (
+                                    <span>{event.name}</span>
+                                ) : (
+                                    <span className="text-neutral-500 dark:text-neutral-400">
+                                        None selected
+                                    </span>
+                                )}
+                            </div>
+                            <div className="mt-3">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsDrawerOpen(false)
+                                        handleChangeIdentity()
+                                    }}
+                                    className="w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm text-neutral-800 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800"
+                                >
+                                    Change
+                                </button>
+                            </div>
+                        </div>
+                        <div className="my-3 h-px bg-neutral-200 dark:bg-neutral-800" />
                         <nav className="flex flex-col gap-1">
                             <NavItem
                                 to="/"

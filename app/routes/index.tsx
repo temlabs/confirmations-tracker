@@ -155,7 +155,12 @@ export default function Index() {
                                         <ConfirmationListItem
                                             key={c.id}
                                             confirmation={c}
-                                            onPress={() => {
+                                            onPress={() =>
+                                                navigate(
+                                                    `/confirmations/${c.id}`
+                                                )
+                                            }
+                                            onEdit={() => {
                                                 const next =
                                                     new URLSearchParams(
                                                         location.search
