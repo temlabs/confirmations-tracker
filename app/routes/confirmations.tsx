@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router'
 import { useFetchCurrentEvent } from '~/src/event/useFetchCurrentEvent'
 import { useFetchConfirmations } from '~/src/confirmation/useFetchConfirmations'
@@ -100,6 +100,26 @@ export default function Confirmations() {
         else next.set(key, value)
         navigate({ search: next.toString() ? `?${next.toString()}` : '' })
     }
+
+    // Client-side search of the currently presented list
+    const [search, setSearch] = useState('')
+    const filtered = useMemo(() => {
+        if (!data) return []
+        const q = search.trim().toLowerCase()
+        if (!q) return data
+        return data.filter((c) => {
+            const first = c.first_name?.toLowerCase() ?? ''
+            const last = (c.last_name ?? '').toLowerCase()
+            const full = `${c.first_name} ${c.last_name ?? ''}`.toLowerCase()
+            const contact = (c.contact_number ?? '').toLowerCase()
+            return (
+                first.includes(q) ||
+                last.includes(q) ||
+                full.includes(q) ||
+                contact.includes(q)
+            )
+        })
+    }, [data, search])
 
     return (
         <main className="min-h-[100svh] px-4 py-8">
@@ -224,12 +244,22 @@ export default function Confirmations() {
                         </p>
                     ) : (
                         <div>
+                            {/* Local search */}
+                            <div className="mb-3">
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Search name or contact…"
+                                    className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+                                />
+                            </div>
                             <div className="mb-3 text-sm text-neutral-600 dark:text-neutral-400">
-                                {data!.length} confirmation
-                                {data!.length !== 1 ? 's' : ''}
+                                {filtered.length} confirmation
+                                {filtered.length !== 1 ? 's' : ''}
                             </div>
                             <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                                {data!.map((c) => (
+                                {filtered.map((c) => (
                                     <ConfirmationListItem
                                         key={c.id}
                                         confirmation={c}
