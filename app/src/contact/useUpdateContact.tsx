@@ -32,6 +32,7 @@ export function useUpdateContact() {
             } else {
                 qc.invalidateQueries({ queryKey: ['contact'] })
             }
+            qc.invalidateQueries({ queryKey: ['confirmations'] })
             qc.invalidateQueries({ queryKey: ['event_member_targets'] })
             qc.invalidateQueries({ queryKey: ['events'] })
         },

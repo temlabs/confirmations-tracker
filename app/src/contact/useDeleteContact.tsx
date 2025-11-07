@@ -15,6 +15,8 @@ export function useDeleteContact() {
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['contacts'] })
+            qc.invalidateQueries({ queryKey: ['contact'] })
+            qc.invalidateQueries({ queryKey: ['confirmations'] })
             qc.invalidateQueries({ queryKey: ['event_member_targets'] })
             qc.invalidateQueries({ queryKey: ['events'] })
         },

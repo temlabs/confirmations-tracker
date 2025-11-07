@@ -307,7 +307,7 @@ export default function Confirmations() {
                                 />
                             </div>
                             <div className="mb-3 text-sm text-neutral-600 dark:text-neutral-400">
-                                {filtered.length} confirmation
+                                {filtered.length} contact
                                 {filtered.length !== 1 ? 's' : ''}
                             </div>
                             <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
