@@ -15,7 +15,7 @@ import { useFetchConfirmations } from '~/src/confirmation/useFetchConfirmations'
 import { HeroButton } from '~/src/components/heroButton/HeroButton'
 import { LinkButton } from '~/src/components/linkButton/LinkButton'
 
-export const meta = () => [{ title: 'Your contacts' }]
+export const meta = () => [{ title: 'Your Contacts' }]
 
 export default function Index() {
     const navigate = useNavigate()
@@ -84,7 +84,7 @@ export default function Index() {
     return (
         <main className="min-h-[100svh] px-4 py-8">
             <div className="container mx-auto">
-                <h1 className="text-xl font-semibold">Your contacts</h1>
+                <h1 className="text-xl font-semibold">Your Contacts</h1>
                 {member ? (
                     <div className="mt-4">
                         <IdentityHeader

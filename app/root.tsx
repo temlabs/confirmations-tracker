@@ -131,7 +131,7 @@ export default function App() {
                     Navigation
                 </div>
                 <nav className="mt-3 flex flex-col gap-1">
-                    <NavItem to="/" label="Your contacts" />
+                    <NavItem to="/" label="Your Contacts" />
                     <NavItem to="/contacts" label="All Contacts" />
                     <NavItem to="/live" label="Live Attendance" />
                     <NavItem to="/data" label="Data" />
