@@ -1,8 +1,9 @@
-import { useParams } from 'react-router'
+import { useParams, useNavigate } from 'react-router'
 import { useMemo, useState, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useFetchContactById } from '~/src/contact/useFetchContactById'
 import { useUpdateContact } from '~/src/contact/useUpdateContact'
+import { useDeleteContact } from '~/src/contact/useDeleteContact'
 import type { Tables, TablesUpdate } from '~/types/database.types'
 import { useFetchCallsByConfirmation } from '~/src/call/useFetchCallsByConfirmation'
 import { useFetchVisitsByConfirmation } from '~/src/visit/useFetchVisitsByConfirmation'
@@ -22,9 +23,12 @@ type Confirmation = Tables<'contacts'>
 export const meta = () => [{ title: 'Confirmation Details' }]
 
 export default function ConfirmationDetail() {
+    const navigate = useNavigate()
     const { id } = useParams()
     const { data: confirmation, isLoading, error } = useFetchContactById(id)
     const { mutateAsync: updateAsync, isPending: updating } = useUpdateContact()
+    const { mutateAsync: deleteContactAsync, isPending: deletingContact } =
+        useDeleteContact()
 
     const { data: calls } = useFetchCallsByConfirmation(id)
     const { data: visits } = useFetchVisitsByConfirmation(id)
@@ -106,13 +110,38 @@ export default function ConfirmationDetail() {
                                     {confirmation.first_name}{' '}
                                     {confirmation.last_name ?? ''}
                                 </h1>
-                                <button
-                                    type="button"
-                                    onClick={() => setEditing((v) => !v)}
-                                    className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
-                                >
-                                    {editing ? 'Cancel' : 'Edit'}
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditing((v) => !v)}
+                                        className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                                    >
+                                        {editing ? 'Cancel' : 'Edit'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            if (
+                                                window.confirm(
+                                                    'Delete this contact? This cannot be undone.'
+                                                )
+                                            ) {
+                                                try {
+                                                    await deleteContactAsync(
+                                                        confirmation.id
+                                                    )
+                                                    navigate('/contacts')
+                                                } catch {}
+                                            }
+                                        }}
+                                        disabled={deletingContact}
+                                        className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/30 disabled:opacity-60"
+                                    >
+                                        {deletingContact
+                                            ? 'Deleting…'
+                                            : 'Delete'}
+                                    </button>
+                                </div>
                             </div>
                             <form
                                 className="mt-3 space-y-3"
@@ -696,6 +725,7 @@ function AddEventModal({
                                         type="datetime-local"
                                         name="call_timestamp"
                                         defaultValue={defaultDateTime}
+                                        required
                                         className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
                                     />
                                 </div>
@@ -723,6 +753,7 @@ function AddEventModal({
                                 <select
                                     name="caller_member_id"
                                     defaultValue={currentMemberId ?? ''}
+                                    required
                                     className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
                                 >
                                     <option value="">Select…</option>
@@ -766,6 +797,22 @@ function AddEventModal({
                             <VisitorsTypeahead
                                 name="visitor_member_ids"
                                 allMembers={members ?? []}
+                                initial={(() => {
+                                    const me =
+                                        (members ?? []).find(
+                                            (m) => m.id === currentMemberId
+                                        ) || null
+                                    return me
+                                        ? [
+                                              {
+                                                  id: me.id as string,
+                                                  label:
+                                                      me.full_name ??
+                                                      `${me.first_name} ${me.last_name}`,
+                                              },
+                                          ]
+                                        : []
+                                })()}
                             />
                             <VisiteesTypeahead
                                 name="extra_visitee_ids"
@@ -797,6 +844,7 @@ function AddEventModal({
                         <button
                             type="submit"
                             disabled={
+                                !type ||
                                 (type === 'call' && creatingCall) ||
                                 (type === 'visit' && creatingVisit)
                             }
@@ -1350,7 +1398,7 @@ function VisitorsTypeahead({
                     className="mt-2 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
                 />
                 {focused && query.length > 0 && (
-                    <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-neutral-200 bg-white text-sm dark:border-neutral-800 dark:bg-neutral-900">
+                    <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-md border border-neutral-200 bg-white text-sm dark:border-neutral-800 dark:bg-neutral-900">
                         {filtered.map((m) => (
                             <li key={m.id}>
                                 <button
@@ -1439,7 +1487,7 @@ function VisiteesTypeahead({
                     className="mt-2 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
                 />
                 {focused && query.length > 0 && (
-                    <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-neutral-200 bg-white text-sm dark:border-neutral-800 dark:bg-neutral-900">
+                    <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-md border border-neutral-200 bg-white text-sm dark:border-neutral-800 dark:bg-neutral-900">
                         {filtered.map((c) => (
                             <li key={c.id}>
                                 <button

@@ -9,6 +9,8 @@ import {
 } from 'recharts'
 import type { Tables } from '~/types/database.types'
 import { useFetchBacentaTargets } from '~/src/bacenta/useFetchBacentaTargets'
+import { useFetchEventMembers } from '~/src/event/useFetchEventMembers'
+import { useFetchConfirmations } from '~/src/confirmation/useFetchConfirmations'
 
 type BacentaTargetsRow = Tables<'event_bacenta_targets_view'>
 
@@ -17,12 +19,28 @@ export function ConfirmationsByBacentaBarChart({
 }: {
     eventId: string
 }) {
-    const { data, isLoading, error } = useFetchBacentaTargets(
+    const {
+        data: targets,
+        isLoading,
+        error,
+    } = useFetchBacentaTargets(
         {
             equals: { event_id: eventId },
             orderBy: { column: 'confirmations_target', ascending: false },
         },
         { includeBacentaName: true }
+    )
+
+    // Fetch members with bacenta names to map confirmations to bacentas
+    const { data: eventMembers } = useFetchEventMembers(
+        { equals: { event_id: eventId } },
+        { includeBacentaName: true }
+    )
+
+    // Fetch confirmed contacts for this event (confirmed_at IS NOT NULL)
+    const { data: confirmed } = useFetchConfirmations(
+        { equals: { event_id: eventId } },
+        { scopeToCurrentEvent: false }
     )
 
     if (isLoading) {
@@ -40,13 +58,44 @@ export function ConfirmationsByBacentaBarChart({
         )
     }
 
-    const chartData = (data ?? [])
-        .map((r) => {
-            const name = (r as any).bacenta_name ?? 'Unknown'
-            const target = r.confirmations_target ?? 0
-            const total = r.total_confirmations ?? 0
-            const firstTimers = r.total_first_timers ?? 0
-            const nonFirstTimers = total - firstTimers
+    // Build mapping: member_id -> bacenta_name
+    const memberToBacenta = new Map<string, string>()
+    for (const m of eventMembers ?? []) {
+        const name = (m as any).bacenta_name ?? null
+        if (name && m.member_id)
+            memberToBacenta.set(m.member_id as string, name)
+    }
+
+    // Aggregate confirmed contacts by bacenta
+    const byBacenta = new Map<
+        string,
+        { total: number; firstTimers: number; target: number }
+    >()
+    // Initialize from targets to ensure ordering and target presence
+    for (const t of targets ?? []) {
+        const name = (t as any).bacenta_name ?? 'Unknown'
+        byBacenta.set(name, {
+            total: 0,
+            firstTimers: 0,
+            target: t.confirmations_target ?? 0,
+        })
+    }
+    for (const c of confirmed ?? []) {
+        const memberId = c.contacted_by_member_id as string
+        const bacenta = memberToBacenta.get(memberId) ?? 'Unknown'
+        const entry = byBacenta.get(bacenta) ?? {
+            total: 0,
+            firstTimers: 0,
+            target: 0,
+        }
+        entry.total += 1
+        if (c.is_first_time) entry.firstTimers += 1
+        byBacenta.set(bacenta, entry)
+    }
+
+    const chartData = Array.from(byBacenta.entries())
+        .map(([name, { total, firstTimers, target }]) => {
+            const nonFirstTimers = Math.max(0, total - firstTimers)
             const pct =
                 target > 0
                     ? Math.min(100, Math.round((total / target) * 100))
