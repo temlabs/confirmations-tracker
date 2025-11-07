@@ -4,7 +4,7 @@ import { useFetchCurrentEvent } from '~/src/event/useFetchCurrentEvent'
 import { useFetchEventMembers } from '~/src/event/useFetchEventMembers'
 import { useFetchMembers } from '~/src/member/useFetchMembers'
 import { MemberListItem } from '~/src/member/components/MemberListItem'
-import { useFetchConfirmations } from '~/src/confirmation/useFetchConfirmations'
+import { useFetchContacts } from '~/src/contact/useFetchContacts'
 import { MembersFilterModal } from '~/src/member/components/MembersFilterModal'
 import type { Tables } from '~/types/database.types'
 
@@ -54,12 +54,12 @@ export default function Members() {
     )
 
     // Fetch last confirmation per member (optional, limited for perf)
-    const { data: lastConfs } = useFetchConfirmations(
+    const { data: lastConfs } = useFetchContacts(
         event
             ? {
                   equals: { event_id: event.id },
                   orderBy: [
-                      { column: 'confirmed_by_member_id', ascending: true },
+                      { column: 'contacted_by_member_id', ascending: true },
                       { column: 'created_at', ascending: false },
                   ],
                   limit: 1000,
@@ -76,7 +76,7 @@ export default function Members() {
         const map = new Map<string, string>()
         if (!lastConfs) return map
         for (const c of lastConfs) {
-            const key = c.confirmed_by_member_id
+            const key = c.contacted_by_member_id
             const existing = key ? map.get(key) : undefined
             if (
                 key &&
@@ -266,9 +266,7 @@ export default function Members() {
                                     confirmationsTarget={r.target}
                                     lastConfirmationAt={r.last}
                                     onPress={() => {
-                                        navigate(
-                                            `/confirmations?members=${r.id}`
-                                        )
+                                        navigate(`/contacts?members=${r.id}`)
                                     }}
                                 />
                             ))}

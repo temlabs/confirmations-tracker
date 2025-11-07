@@ -6,15 +6,16 @@ import { IdentityHeader } from '~/src/components/identityHeader/IdentityHeader'
 import { useFetchCurrentMember } from '~/src/member/useFetchCurrentMember'
 import { useFetchCurrentEvent } from '~/src/event/useFetchCurrentEvent'
 import { useFetchEventMembers } from '~/src/event/useFetchEventMembers'
-import { AddConfirmationModal } from '~/src/confirmation/components/AddConfirmationModal'
+import { AddContactModal } from '~/src/contact/components/AddContactModal'
+import { useFetchContacts } from '~/src/contact/useFetchContacts'
+import { ContactListItem } from '~/src/contact/components/ContactListItem'
+import { EditContactModal } from '~/src/contact/components/EditContactModal'
 import { useFetchConfirmations } from '~/src/confirmation/useFetchConfirmations'
-import { ConfirmationListItem } from '~/src/confirmation/components/ConfirmationListItem'
-import { EditConfirmationModal } from '~/src/confirmation/components/EditConfirmationModal'
 
 import { HeroButton } from '~/src/components/heroButton/HeroButton'
 import { LinkButton } from '~/src/components/linkButton/LinkButton'
 
-export const meta = () => [{ title: 'Add a Confirmation' }]
+export const meta = () => [{ title: 'Your contacts' }]
 
 export default function Index() {
     const navigate = useNavigate()
@@ -33,15 +34,27 @@ export default function Index() {
         { enabled: !!member && !!event }
     )
 
+    const { data: myConfirmations } = useFetchConfirmations(
+        member && event
+            ? {
+                  equals: {
+                      event_id: event.id,
+                      contacted_by_member_id: member.id,
+                  },
+              }
+            : undefined,
+        { enabled: !!member && !!event }
+    )
+
     const {
         data: recentConfirmations,
         isLoading: recentLoading,
         error: recentError,
-    } = useFetchConfirmations(
+    } = useFetchContacts(
         member && event
             ? {
                   equals: {
-                      confirmed_by_member_id: member.id,
+                      contacted_by_member_id: member.id,
                       event_id: event.id,
                   },
                   orderBy: { column: 'created_at', ascending: false },
@@ -71,7 +84,7 @@ export default function Index() {
     return (
         <main className="min-h-[100svh] px-4 py-8">
             <div className="container mx-auto">
-                <h1 className="text-xl font-semibold">Add a Confirmation</h1>
+                <h1 className="text-xl font-semibold">Your contacts</h1>
                 {member ? (
                     <div className="mt-4">
                         <IdentityHeader
@@ -90,9 +103,7 @@ export default function Index() {
                             )}
                             {event && !targetsLoading && !targetsError && (
                                 <HeroProgress
-                                    total={
-                                        targets?.[0]?.total_confirmations ?? 0
-                                    }
+                                    total={myConfirmations?.length ?? 0}
                                     target={
                                         targets?.[0]?.confirmations_target ?? 0
                                     }
@@ -110,7 +121,7 @@ export default function Index() {
                                     onClick={openAddConfirmationModal}
                                     disabled={!member || !event}
                                 >
-                                    Add confirmation
+                                    Add contact
                                 </button>
                             </div>
                         </section>
@@ -119,14 +130,14 @@ export default function Index() {
                         <section className="mt-6 rounded-md border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-base font-semibold">
-                                    Recent confirmations
+                                    Recent Contacts
                                 </h2>
                                 {member && (
                                     <LinkButton
                                         text="See all"
                                         onPress={() =>
                                             navigate(
-                                                `/confirmations?members=${member.id}`
+                                                `/contacts?members=${member.id}`
                                             )
                                         }
                                     />
@@ -134,8 +145,7 @@ export default function Index() {
                             </div>
                             {!event || !member ? (
                                 <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-                                    Select an event and member to see
-                                    confirmations.
+                                    Select an event and member to see contacts.
                                 </p>
                             ) : recentLoading ? (
                                 <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
@@ -143,22 +153,20 @@ export default function Index() {
                                 </p>
                             ) : recentError ? (
                                 <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-                                    Failed to load confirmations
+                                    Failed to load contacts
                                 </p>
                             ) : (recentConfirmations?.length ?? 0) === 0 ? (
                                 <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-                                    You have no confirmations yet.
+                                    You have no contacts yet.
                                 </p>
                             ) : (
                                 <ul className="mt-2 divide-y divide-neutral-100 dark:divide-neutral-800">
                                     {recentConfirmations!.map((c) => (
-                                        <ConfirmationListItem
+                                        <ContactListItem
                                             key={c.id}
-                                            confirmation={c}
+                                            contact={c}
                                             onPress={() =>
-                                                navigate(
-                                                    `/confirmations/${c.id}`
-                                                )
+                                                navigate(`/contacts/${c.id}`)
                                             }
                                             onEdit={() => {
                                                 const next =
@@ -186,13 +194,11 @@ export default function Index() {
                                 (x) => x.id === editId
                             )
                             if (!current) return null
-                            return (
-                                <EditConfirmationModal confirmation={current} />
-                            )
+                            return <EditContactModal contact={current} />
                         })()}
 
                         {isAddConfirmationOpen && member && event && (
-                            <AddConfirmationModal
+                            <AddContactModal
                                 memberId={member.id}
                                 eventId={event.id}
                             />

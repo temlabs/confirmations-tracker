@@ -32,7 +32,7 @@ export function useFetchCallsByConfirmation(
                 .select(
                     '*, members!calls_caller_member_id_fkey(id, first_name, last_name, full_name), call_outcomes!calls_outcome_id_fkey(id, description, is_successful)'
                 )
-                .eq('callee_confirmation_id', confirmationId)
+                .eq('callee_contact_id', confirmationId)
                 .order('updated_at', { ascending: false })
             if (error) throw error
             const rows = (data ?? []) as any[]

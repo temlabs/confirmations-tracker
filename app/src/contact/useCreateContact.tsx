@@ -2,33 +2,33 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { getSupabaseBrowserClient } from '~/lib/supabase.client'
 import type { Tables, TablesInsert } from '~/types/database.types'
 
-type Confirmation = Tables<'confirmations'>
+type Contact = Tables<'contacts'>
 
 type EventMemberTarget = Tables<'event_member_targets'>
 
 type Event = Tables<'events'>
 
-export function useCreateConfirmation() {
+export function useCreateContact() {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: async (input: TablesInsert<'confirmations'>) => {
+        mutationFn: async (input: TablesInsert<'contacts'>) => {
             const supabase = getSupabaseBrowserClient()
             const { data, error } = await supabase
-                .from('confirmations')
+                .from('contacts')
                 .insert(input)
                 .select('*')
                 .single()
             if (error) throw error
-            return data as Confirmation
+            return data as Contact
         },
         onMutate: async (input) => {
             const eventId = input.event_id
-            const memberId = input.confirmed_by_member_id
+            const memberId = input.contacted_by_member_id
 
             await Promise.all([
                 qc.cancelQueries({ queryKey: ['event_member_targets'] }),
                 qc.cancelQueries({ queryKey: ['events'] }),
-                qc.cancelQueries({ queryKey: ['confirmations'] }),
+                qc.cancelQueries({ queryKey: ['contacts'] }),
             ])
 
             const previousTargets = qc.getQueriesData<EventMemberTarget[]>({
@@ -90,7 +90,7 @@ export function useCreateConfirmation() {
             }
         },
         onSettled: () => {
-            qc.invalidateQueries({ queryKey: ['confirmations'] })
+            qc.invalidateQueries({ queryKey: ['contacts'] })
             qc.invalidateQueries({ queryKey: ['event_member_targets'] })
             qc.invalidateQueries({ queryKey: ['events'] })
         },

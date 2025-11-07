@@ -7,7 +7,7 @@ import {
     Tooltip,
     ReferenceLine,
 } from 'recharts'
-import { useFetchCumulativeConfirmations } from '~/src/confirmation/useFetchCumulativeConfirmations'
+import { useFetchCumulativeContacts } from '~/src/contact/useFetchCumulativeContacts'
 
 export type CumulativeConfirmationsChartProps = {
     eventId: string
@@ -20,7 +20,7 @@ export function CumulativeConfirmationsChart({
     confirmationsTarget,
     attendanceTarget,
 }: CumulativeConfirmationsChartProps) {
-    const { data, isLoading, error } = useFetchCumulativeConfirmations({
+    const { data, isLoading, error } = useFetchCumulativeContacts({
         equals: { event_id: eventId },
         orderBy: { column: 'day', ascending: true },
     })
@@ -55,13 +55,22 @@ export function CumulativeConfirmationsChart({
             month: 'short',
             day: 'numeric',
         }),
-        value: row.cumulative_confirmations ?? 0,
+        contacts: row.cumulative_contacts ?? 0,
+        confirmed: row.cumulative_confirmed ?? 0,
+        transport: row.cumulative_transport_arranged ?? 0,
     }))
+
+    const maxSeriesValue = chartData.reduce((acc, d) => {
+        const localMax = Math.max(d.contacts, d.confirmed, d.transport)
+        return Math.max(acc, localMax)
+    }, 0)
 
     const yMax =
         typeof confirmationsTarget === 'number' && confirmationsTarget > 0
-            ? confirmationsTarget
-            : undefined
+            ? Math.max(confirmationsTarget, maxSeriesValue)
+            : maxSeriesValue > 0
+              ? maxSeriesValue
+              : undefined
     const refY =
         typeof attendanceTarget === 'number' && attendanceTarget > 0
             ? attendanceTarget
@@ -70,7 +79,7 @@ export function CumulativeConfirmationsChart({
     return (
         <div>
             <div className="mb-2 text-sm font-semibold text-neutral-700 dark:text-neutral-200">
-                Cumulative Total Confirmations
+                Cumulative Contacts and Confirmations
             </div>
             <div className="h-56 w-full text-neutral-800 dark:text-neutral-100">
                 <ResponsiveContainer width="100%" height="100%">
@@ -109,9 +118,26 @@ export function CumulativeConfirmationsChart({
                         ) : null}
                         <Area
                             type="monotone"
-                            dataKey="value"
+                            dataKey="contacts"
+                            name="Contacts"
+                            stroke="#94a3b8"
+                            fill="#94a3b880"
+                            strokeWidth={2}
+                        />
+                        <Area
+                            type="monotone"
+                            dataKey="confirmed"
+                            name="Confirmed"
                             stroke="#2563eb"
-                            fill="#3b82f680"
+                            fill="#2563eb55"
+                            strokeWidth={2}
+                        />
+                        <Area
+                            type="monotone"
+                            dataKey="transport"
+                            name="Confirmed + Transport"
+                            stroke="#16a34a"
+                            fill="#16a34a55"
                             strokeWidth={2}
                         />
                     </AreaChart>

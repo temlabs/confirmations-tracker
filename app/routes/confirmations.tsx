@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router'
 import { useFetchCurrentEvent } from '~/src/event/useFetchCurrentEvent'
+import { useFetchContacts } from '~/src/contact/useFetchContacts'
 import { useFetchConfirmations } from '~/src/confirmation/useFetchConfirmations'
-import { ConfirmationListItem } from '~/src/confirmation/components/ConfirmationListItem'
+import { ContactListItem } from '~/src/contact/components/ContactListItem'
 import { useFetchMembers } from '~/src/member/useFetchMembers'
-import { ConfirmationsFilterModal } from '~/src/confirmation/components/ConfirmationsFilterModal'
-import { EditConfirmationModal } from '~/src/confirmation/components/EditConfirmationModal'
+import { ContactsFilterModal } from '~/src/contact/components/ContactsFilterModal'
+import { EditContactModal } from '~/src/contact/components/EditContactModal'
 
-export const meta = () => [{ title: 'All Confirmations' }]
+export const meta = () => [{ title: 'All Contacts' }]
 
 export default function Confirmations() {
     const navigate = useNavigate()
@@ -34,6 +35,7 @@ export default function Confirmations() {
     const firstTimer = params.get('first_timer') || undefined
     const attended = params.get('attended') || undefined
     const sort = params.get('sort') || 'time_desc'
+    const status = params.get('status') || ''
     const showFilters = params.get('filters') === '1'
 
     const orderBy = useMemo(() => {
@@ -58,37 +60,75 @@ export default function Confirmations() {
         }
     }, [sort])
 
-    const { data, isLoading, error } = useFetchConfirmations(
-        event
+    const baseFilters = event
+        ? {
+              equals: {
+                  event_id: event.id,
+                  ...(firstTimer !== undefined
+                      ? { is_first_time: firstTimer === 'true' }
+                      : {}),
+                  ...(attended !== undefined
+                      ? { attended: attended === 'true' }
+                      : {}),
+              } as any,
+              in:
+                  memberIds.length > 0
+                      ? { contacted_by_member_id: memberIds as string[] }
+                      : undefined,
+              range:
+                  from || to
+                      ? {
+                            created_at: {
+                                ...(from ? { gte: from } : {}),
+                                ...(to ? { lte: to } : {}),
+                            },
+                        }
+                      : undefined,
+              orderBy,
+              limit: 200,
+          }
+        : undefined
+
+    const {
+        data: confirmedData,
+        isLoading: confirmedLoading,
+        error: confirmedError,
+    } = useFetchConfirmations(baseFilters as any, {
+        enabled: !!event && (status === 'confirmed' || status === 'advanced'),
+        confirmationsWithTransportArrangedOnly: status === 'advanced',
+    })
+
+    const {
+        data: contactsData,
+        isLoading: contactsLoading,
+        error: contactsError,
+    } = useFetchContacts(
+        status === 'unconfirmed' && baseFilters
             ? {
+                  ...(baseFilters as any),
                   equals: {
-                      event_id: event.id,
-                      ...(firstTimer !== undefined
-                          ? { is_first_time: firstTimer === 'true' }
-                          : {}),
-                      ...(attended !== undefined
-                          ? { attended: attended === 'true' }
-                          : {}),
+                      ...(baseFilters as any).equals,
+                      confirmed_at: null,
                   },
-                  in:
-                      memberIds.length > 0
-                          ? { confirmed_by_member_id: memberIds as string[] }
-                          : undefined,
-                  range:
-                      from || to
-                          ? {
-                                created_at: {
-                                    ...(from ? { gte: from } : {}),
-                                    ...(to ? { lte: to } : {}),
-                                },
-                            }
-                          : undefined,
-                  orderBy,
-                  limit: 200,
               }
-            : undefined,
-        { enabled: !!event }
+            : baseFilters,
+        {
+            enabled: !!event && (status === '' || status === 'unconfirmed'),
+        }
     )
+
+    const data =
+        status === 'confirmed' || status === 'advanced'
+            ? confirmedData
+            : contactsData
+    const isLoading =
+        status === 'confirmed' || status === 'advanced'
+            ? confirmedLoading
+            : contactsLoading
+    const error =
+        status === 'confirmed' || status === 'advanced'
+            ? confirmedError
+            : contactsError
 
     useEffect(() => {
         if (loaded && !event) navigate('/identity', { replace: true })
@@ -124,7 +164,7 @@ export default function Confirmations() {
     return (
         <main className="min-h-[100svh] px-4 py-8">
             <div className="container mx-auto">
-                <h1 className="text-xl font-semibold">All Confirmations</h1>
+                <h1 className="text-xl font-semibold">All Contacts</h1>
                 {/* Controls */}
                 <section className="mt-3 flex flex-col gap-3 rounded-md border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
                     <div className="flex flex-wrap items-center gap-3">
@@ -189,6 +229,18 @@ export default function Confirmations() {
                                 onClear={() => setParam('attended', null)}
                             />
                         ) : null}
+                        {status ? (
+                            <Chip
+                                label={
+                                    status === 'unconfirmed'
+                                        ? 'Unconfirmed'
+                                        : status === 'advanced'
+                                          ? 'Confirmed + transport arranged'
+                                          : 'Confirmed'
+                                }
+                                onClear={() => setParam('status', null)}
+                            />
+                        ) : null}
                         {memberIds.map((id) => (
                             <Chip
                                 key={id}
@@ -228,7 +280,7 @@ export default function Confirmations() {
                 <section className="mt-4 rounded-md border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
                     {!event ? (
                         <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                            Select an event to view confirmations.
+                            Select an event to view contacts.
                         </p>
                     ) : isLoading ? (
                         <p className="text-sm text-neutral-600 dark:text-neutral-400">
@@ -236,11 +288,11 @@ export default function Confirmations() {
                         </p>
                     ) : error ? (
                         <p className="text-sm text-red-600 dark:text-red-400">
-                            Failed to load confirmations
+                            Failed to load contacts
                         </p>
                     ) : (data?.length ?? 0) === 0 ? (
                         <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                            No confirmations yet.
+                            No contacts yet.
                         </p>
                     ) : (
                         <div>
@@ -260,12 +312,12 @@ export default function Confirmations() {
                             </div>
                             <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
                                 {filtered.map((c) => (
-                                    <ConfirmationListItem
+                                    <ContactListItem
                                         key={c.id}
-                                        confirmation={c}
-                                        byline={`Confirmed by ${memberIdToName.get(c.confirmed_by_member_id) ?? 'Unknown'}`}
+                                        contact={c}
+                                        byline={`Contacted by ${memberIdToName.get(c.contacted_by_member_id) ?? 'Unknown'}`}
                                         onPress={() =>
-                                            navigate(`/confirmations/${c.id}`)
+                                            navigate(`/contacts/${c.id}`)
                                         }
                                         onEdit={() => {
                                             const next = new URLSearchParams(
@@ -284,7 +336,7 @@ export default function Confirmations() {
                 </section>
 
                 {showFilters && members && (
-                    <ConfirmationsFilterModal members={members} />
+                    <ContactsFilterModal members={members} />
                 )}
 
                 {/* Edit modal */}
@@ -295,7 +347,7 @@ export default function Confirmations() {
                     if (!editId) return null
                     const current = (data ?? []).find((x) => x.id === editId)
                     if (!current) return null
-                    return <EditConfirmationModal confirmation={current} />
+                    return <EditContactModal contact={current} />
                 })()}
             </div>
         </main>

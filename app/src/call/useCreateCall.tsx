@@ -23,7 +23,8 @@ export function useCreateCall() {
                     'calls',
                     {
                         confirmationId:
-                            variables.callee_confirmation_id ?? null,
+                            // keep query key shape for compatibility
+                            (variables as any).callee_contact_id ?? null,
                     },
                 ],
             })

@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-query'
 import { getSupabaseBrowserClient } from '~/lib/supabase.client'
 import type { Tables } from '~/types/database.types'
+import { useFetchCurrentEvent } from '~/src/event/useFetchCurrentEvent'
 
 type EventMemberTarget = Tables<'event_member_targets'>
 
@@ -45,6 +46,8 @@ type FetchEventMemberTargetsOptions = Omit<
     'queryKey' | 'queryFn'
 > & {
     includeBacentaName?: boolean
+    /** When true (default), scope to current event unless filters already specify event_id */
+    scopeToCurrentEvent?: boolean
 }
 
 export function useFetchEventMembers(
@@ -57,6 +60,22 @@ export function useFetchEventMembers(
     })[],
     Error
 > {
+    const { event } = useFetchCurrentEvent()
+    const shouldScope =
+        (config?.scopeToCurrentEvent ?? true) &&
+        !(filters && filters.equals && 'event_id' in filters.equals)
+
+    const finalFilters: EventMemberTargetsFilter | undefined =
+        shouldScope && event
+            ? {
+                  ...filters,
+                  equals: { ...(filters?.equals ?? {}), event_id: event.id },
+              }
+            : filters
+
+    const effectiveEnabled =
+        (config?.enabled ?? true) && (!shouldScope || !!event)
+
     return useQuery<
         (EventMemberTarget & {
             bacenta_name?: string | null
@@ -69,7 +88,7 @@ export function useFetchEventMembers(
         })[],
         QueryKey
     >({
-        queryKey: ['event_member_targets', filters ?? null],
+        queryKey: ['event_member_targets', finalFilters ?? null],
         queryFn: async () => {
             const supabase = getSupabaseBrowserClient()
             const select = config?.includeBacentaName
@@ -77,8 +96,10 @@ export function useFetchEventMembers(
                 : '*'
             let query = supabase.from('event_member_targets').select(select)
 
-            if (filters?.equals) {
-                for (const [key, value] of Object.entries(filters.equals)) {
+            if (finalFilters?.equals) {
+                for (const [key, value] of Object.entries(
+                    finalFilters.equals
+                )) {
                     if (value === undefined) continue
                     const column = key as keyof EventMemberTarget as string
                     if (value === null) {
@@ -89,29 +110,31 @@ export function useFetchEventMembers(
                 }
             }
 
-            if (filters?.in) {
-                for (const [key, arr] of Object.entries(filters.in)) {
+            if (finalFilters?.in) {
+                for (const [key, arr] of Object.entries(finalFilters.in)) {
                     if (!arr || arr.length === 0) continue
                     const column = key as keyof EventMemberTarget as string
                     query = query.in(column, arr as never[])
                 }
             }
 
-            if (filters?.ilike) {
-                for (const [key, pattern] of Object.entries(filters.ilike)) {
+            if (finalFilters?.ilike) {
+                for (const [key, pattern] of Object.entries(
+                    finalFilters.ilike
+                )) {
                     if (!pattern) continue
                     const column = key as keyof EventMemberTarget as string
                     query = query.ilike(column, pattern as string)
                 }
             }
 
-            if (filters?.orderBy) {
-                const { column, ascending = true } = filters.orderBy
+            if (finalFilters?.orderBy) {
+                const { column, ascending = true } = finalFilters.orderBy
                 query = query.order(column as string, { ascending })
             }
 
-            if (typeof filters?.limit === 'number') {
-                query = query.limit(filters.limit)
+            if (typeof finalFilters?.limit === 'number') {
+                query = query.limit(finalFilters.limit)
             }
 
             const { data, error } = await query
@@ -131,6 +154,7 @@ export function useFetchEventMembers(
             }))
             return mapped
         },
-        ...config,
+        ...(config ?? {}),
+        enabled: effectiveEnabled,
     })
 }

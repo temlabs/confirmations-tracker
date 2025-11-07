@@ -5,13 +5,11 @@ import { useFetchBacentas } from '~/src/bacenta/useFetchBacentas'
 
 type Member = Tables<'members'>
 
-export type ConfirmationsFilterModalProps = {
+export type ContactsFilterModalProps = {
     members: Member[]
 }
 
-export function ConfirmationsFilterModal({
-    members,
-}: ConfirmationsFilterModalProps) {
+export function ContactsFilterModal({ members }: ContactsFilterModalProps) {
     const navigate = useNavigate()
     const location = useLocation()
 
@@ -25,6 +23,7 @@ export function ConfirmationsFilterModal({
     const initialFirstTimer = params.get('first_timer') ?? ''
     const initialAttended = params.get('attended') ?? ''
     const initialMembersCsv = params.get('members') ?? ''
+    const initialStatus = params.get('status') ?? ''
     const initialSelected = useMemo(
         () =>
             initialMembersCsv
@@ -39,6 +38,7 @@ export function ConfirmationsFilterModal({
     const [attended, setAttended] = useState(initialAttended)
     const [selectedMemberIds, setSelectedMemberIds] =
         useState<string[]>(initialSelected)
+    const [status, setStatus] = useState(initialStatus)
 
     useEffect(() => {
         setFrom(initialFrom)
@@ -46,6 +46,7 @@ export function ConfirmationsFilterModal({
         setFirstTimer(initialFirstTimer)
         setAttended(initialAttended)
         setSelectedMemberIds(initialSelected)
+        setStatus(initialStatus)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.search])
 
@@ -115,6 +116,8 @@ export function ConfirmationsFilterModal({
         if (selectedMemberIds.length > 0)
             next.set('members', selectedMemberIds.join(','))
         else next.delete('members')
+        if (status) next.set('status', status)
+        else next.delete('status')
         next.delete('filters')
         navigate({ search: next.toString() ? `?${next.toString()}` : '' })
     }
@@ -125,6 +128,7 @@ export function ConfirmationsFilterModal({
         setFirstTimer('')
         setAttended('')
         setSelectedMemberIds([])
+        setStatus('')
     }
 
     return (
@@ -199,6 +203,24 @@ export function ConfirmationsFilterModal({
                             <option value="">All</option>
                             <option value="true">Attended only</option>
                             <option value="false">Did not attend</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium">
+                            Confirmation status
+                        </label>
+                        <select
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value)}
+                            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+                        >
+                            <option value="">All</option>
+                            <option value="unconfirmed">Unconfirmed</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="advanced">
+                                Confirmed with transport arranged
+                            </option>
                         </select>
                     </div>
 

@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router'
-import { useCreateConfirmation } from '~/src/confirmation/useCreateConfirmation'
+import { useCreateContact } from '~/src/contact/useCreateContact'
 
-export function AddConfirmationModal({
+export function AddContactModal({
     memberId,
     eventId,
 }: {
@@ -10,7 +10,7 @@ export function AddConfirmationModal({
 }) {
     const navigate = useNavigate()
     const location = useLocation()
-    const { mutateAsync, isPending } = useCreateConfirmation()
+    const { mutateAsync, isPending } = useCreateContact()
 
     const close = () => {
         const params = new URLSearchParams(location.search)
@@ -27,15 +27,26 @@ export function AddConfirmationModal({
         const contact =
             String(formData.get('contact_number') || '').trim() || null
         const is_first_time = formData.get('is_first_time') === 'on'
+        const is_confirmed = formData.get('confirmed_at') === 'on'
+        const is_transport_arranged =
+            formData.get('transport_arranged_at') === 'on'
+        const notes = String(formData.get('notes') || '').trim() || null
         if (!firstName) return
         try {
             await mutateAsync({
                 event_id: eventId,
-                confirmed_by_member_id: memberId,
+                contacted_by_member_id: memberId,
                 first_name: firstName,
                 last_name: lastName,
                 contact_number: contact,
                 is_first_time,
+                notes,
+                ...(is_confirmed
+                    ? { confirmed_at: new Date().toISOString() }
+                    : {}),
+                ...(is_transport_arranged
+                    ? { transport_arranged_at: new Date().toISOString() }
+                    : {}),
             })
             close()
         } catch {}
@@ -50,7 +61,7 @@ export function AddConfirmationModal({
             />
             <div className="relative w-full max-w-md rounded-md border border-neutral-200 bg-white p-4 shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">Add Confirmation</h2>
+                    <h2 className="text-lg font-semibold">Add contact</h2>
                     <button
                         type="button"
                         onClick={close}
@@ -114,6 +125,44 @@ export function AddConfirmationModal({
                         <label htmlFor="is_first_time" className="text-sm">
                             First timer?
                         </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <input
+                            id="confirmed_at"
+                            name="confirmed_at"
+                            type="checkbox"
+                        />
+                        <label htmlFor="confirmed_at" className="text-sm">
+                            Confirmed
+                        </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <input
+                            id="transport_arranged_at"
+                            name="transport_arranged_at"
+                            type="checkbox"
+                        />
+                        <label
+                            htmlFor="transport_arranged_at"
+                            className="text-sm"
+                        >
+                            Transport arranged
+                        </label>
+                    </div>
+                    <div>
+                        <label
+                            htmlFor="notes"
+                            className="block text-sm font-medium"
+                        >
+                            Notes (optional)
+                        </label>
+                        <textarea
+                            id="notes"
+                            name="notes"
+                            rows={4}
+                            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+                            placeholder="Add any useful context…"
+                        />
                     </div>
                     <div className="flex justify-end gap-2 pt-2">
                         <button

@@ -43,6 +43,12 @@ export default function Data() {
         { enabled: !!event }
     )
 
+    // Fetch first-timer confirmations (confirmed_at AND is_first_time)
+    const { data: firstTimerConfirmations } = useFetchConfirmations(
+        event ? { equals: { event_id: event.id } } : undefined,
+        { enabled: !!event, firstTimersOnly: true }
+    )
+
     useEffect(() => {
         if (loaded && !event) navigate('/identity', { replace: true })
     }, [loaded, event, navigate])
@@ -89,7 +95,7 @@ export default function Data() {
 
                 // Count confirmations for this member
                 const memberConfirmations = confirmations.filter(
-                    (conf) => conf.confirmed_by_member_id === member.member_id
+                    (conf) => conf.contacted_by_member_id === member.member_id
                 ).length
 
                 text += `${index + 1}. ${memberName} - ${memberConfirmations}/${memberTarget}\n`
@@ -123,11 +129,11 @@ export default function Data() {
     }
 
     const current = data?.[0]
-    const confTotal = current?.total_confirmations ?? 0
+    const confTotal = confirmations?.length ?? 0
     const confTarget = current?.total_confirmations_target ?? 0
     const attTotal = current?.total_attendees ?? 0
     const attTarget = current?.total_attendance_target ?? 0
-    const firstTimersTotal = current?.total_first_timers ?? 0
+    const firstTimersTotal = firstTimerConfirmations?.length ?? 0
 
     return (
         <main className="min-h-[100svh] px-4 py-8">

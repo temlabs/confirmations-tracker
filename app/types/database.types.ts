@@ -92,7 +92,7 @@ export type Database = {
       calls: {
         Row: {
           call_timestamp: string
-          callee_confirmation_id: string
+          callee_contact_id: string
           caller_member_id: string
           created_at: string
           id: string
@@ -102,7 +102,7 @@ export type Database = {
         }
         Insert: {
           call_timestamp?: string
-          callee_confirmation_id: string
+          callee_contact_id: string
           caller_member_id: string
           created_at?: string
           id?: string
@@ -112,7 +112,7 @@ export type Database = {
         }
         Update: {
           call_timestamp?: string
-          callee_confirmation_id?: string
+          callee_contact_id?: string
           caller_member_id?: string
           created_at?: string
           id?: string
@@ -123,9 +123,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "calls_callee_confirmation_id_fkey"
-            columns: ["callee_confirmation_id"]
+            columns: ["callee_contact_id"]
             isOneToOne: false
-            referencedRelation: "confirmations"
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
           {
@@ -190,76 +190,6 @@ export type Database = {
           },
         ]
       }
-      confirmations: {
-        Row: {
-          attended: boolean
-          confirmed_by_member_id: string
-          contact_number: string | null
-          created_at: string
-          event_id: string
-          first_name: string
-          id: string
-          is_first_time: boolean
-          last_contacted_at: string | null
-          last_name: string | null
-          last_visited_at: string | null
-          total_calls: number
-          total_visits: number
-        }
-        Insert: {
-          attended?: boolean
-          confirmed_by_member_id: string
-          contact_number?: string | null
-          created_at?: string
-          event_id: string
-          first_name: string
-          id?: string
-          is_first_time?: boolean
-          last_contacted_at?: string | null
-          last_name?: string | null
-          last_visited_at?: string | null
-          total_calls?: number
-          total_visits?: number
-        }
-        Update: {
-          attended?: boolean
-          confirmed_by_member_id?: string
-          contact_number?: string | null
-          created_at?: string
-          event_id?: string
-          first_name?: string
-          id?: string
-          is_first_time?: boolean
-          last_contacted_at?: string | null
-          last_name?: string | null
-          last_visited_at?: string | null
-          total_calls?: number
-          total_visits?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "confirmations_confirmed_by_member_id_fkey"
-            columns: ["confirmed_by_member_id"]
-            isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "confirmations_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "event_cumulative_view"
-            referencedColumns: ["event_id"]
-          },
-          {
-            foreignKeyName: "confirmations_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       constituencies: {
         Row: {
           created_at: string
@@ -280,6 +210,85 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      contacts: {
+        Row: {
+          attended: boolean
+          confirmed_at: string | null
+          contact_number: string | null
+          contacted_by_member_id: string
+          created_at: string
+          event_id: string
+          first_name: string
+          id: string
+          is_first_time: boolean
+          last_contacted_at: string | null
+          last_name: string | null
+          last_visited_at: string | null
+          notes: string | null
+          total_calls: number
+          total_visits: number
+          transport_arranged_at: string | null
+        }
+        Insert: {
+          attended?: boolean
+          confirmed_at?: string | null
+          contact_number?: string | null
+          contacted_by_member_id: string
+          created_at?: string
+          event_id: string
+          first_name: string
+          id?: string
+          is_first_time?: boolean
+          last_contacted_at?: string | null
+          last_name?: string | null
+          last_visited_at?: string | null
+          notes?: string | null
+          total_calls?: number
+          total_visits?: number
+          transport_arranged_at?: string | null
+        }
+        Update: {
+          attended?: boolean
+          confirmed_at?: string | null
+          contact_number?: string | null
+          contacted_by_member_id?: string
+          created_at?: string
+          event_id?: string
+          first_name?: string
+          id?: string
+          is_first_time?: boolean
+          last_contacted_at?: string | null
+          last_name?: string | null
+          last_visited_at?: string | null
+          notes?: string | null
+          total_calls?: number
+          total_visits?: number
+          transport_arranged_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "confirmations_confirmed_by_member_id_fkey"
+            columns: ["contacted_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "confirmations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_cumulative_view"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "confirmations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       event_member_targets: {
         Row: {
@@ -514,26 +523,26 @@ export type Database = {
       }
       visit_visitees: {
         Row: {
-          confirmation_id: string
+          contact_id: string
           created_at: string
           visit_id: string
         }
         Insert: {
-          confirmation_id: string
+          contact_id: string
           created_at?: string
           visit_id: string
         }
         Update: {
-          confirmation_id?: string
+          contact_id?: string
           created_at?: string
           visit_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "visit_visitees_confirmation_id_fkey"
-            columns: ["confirmation_id"]
+            columns: ["contact_id"]
             isOneToOne: false
-            referencedRelation: "confirmations"
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
           {
@@ -683,8 +692,9 @@ export type Database = {
       }
       event_cumulative_view: {
         Row: {
-          cumulative_confirmations: number | null
-          cumulative_first_timers: number | null
+          cumulative_confirmed: number | null
+          cumulative_contacts: number | null
+          cumulative_transport_arranged: number | null
           day: string | null
           event_id: string | null
         }

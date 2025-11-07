@@ -10,7 +10,7 @@ type Visit = Tables<'visits'>
 type VisitVisitors = Tables<'visit_visitors'>
 type VisitVisitees = Tables<'visit_visitees'>
 type Member = Tables<'members'>
-type Confirmation = Tables<'confirmations'>
+type Confirmation = Tables<'contacts'>
 
 export type VisitWithJoins = Visit & {
     visitors: Array<
@@ -37,7 +37,7 @@ export function useFetchVisitsByConfirmation(
                         members(id, first_name, last_name, full_name)
                     ),
                     visit_visitees!visit_visitees_visit_id_fkey(
-                        confirmations(id, first_name, last_name)
+                        contacts(id, first_name, last_name)
                     )
                 `
                 )
@@ -47,7 +47,7 @@ export function useFetchVisitsByConfirmation(
                         await supabase
                             .from('visit_visitees')
                             .select('visit_id')
-                            .eq('confirmation_id', confirmationId)
+                            .eq('contact_id', confirmationId)
                     ).data?.map((r) => r.visit_id) ?? []
                 )
                 .order('updated_at', { ascending: false })
@@ -60,7 +60,7 @@ export function useFetchVisitsByConfirmation(
                     .map((vv: any) => vv.members)
                     .filter(Boolean),
                 visitees: (r.visit_visitees ?? [])
-                    .map((ve: any) => ve.confirmations)
+                    .map((ve: any) => ve.contacts)
                     .filter(Boolean),
             })) as VisitWithJoins[]
         },

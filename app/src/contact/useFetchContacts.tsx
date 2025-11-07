@@ -10,7 +10,7 @@ import { useFetchCurrentEvent } from '~/src/event/useFetchCurrentEvent'
 
 type Contact = Tables<'contacts'>
 
-export type ConfirmationsFilter = {
+export type ContactsFilter = {
     equals?: Partial<
         Pick<
             Contact,
@@ -38,32 +38,27 @@ export type ConfirmationsFilter = {
     limit?: number
 }
 
-type FetchConfirmationsOptions = Omit<
+type FetchContactsOptions = Omit<
     UseQueryOptions<Contact[], Error, Contact[], QueryKey>,
     'queryKey' | 'queryFn'
 > & {
-    /** Scope by current event unless equals.event_id is provided (default: true) */
+    /**
+     * When true (default), automatically scopes results to the currently selected event
+     * unless an explicit equals.event_id is provided in filters.
+     */
     scopeToCurrentEvent?: boolean
-    /** When true, only include confirmations with transport arranged (advanced) */
-    confirmationsWithTransportArrangedOnly?: boolean
-    /** When true, only include first timers (is_first_time = true) */
-    firstTimersOnly?: boolean
 }
 
-/**
- * Fetch confirmations (contacts with confirmed_at IS NOT NULL).
- * Optionally require transport_arranged_at IS NOT NULL when confirmationsWithTransportArrangedOnly is true.
- */
-export function useFetchConfirmations(
-    filters?: ConfirmationsFilter,
-    config?: FetchConfirmationsOptions
+export function useFetchContacts(
+    filters?: ContactsFilter,
+    config?: FetchContactsOptions
 ): UseQueryResult<Contact[], Error> {
     const { event } = useFetchCurrentEvent()
     const shouldScope =
         (config?.scopeToCurrentEvent ?? true) &&
         !(filters && filters.equals && 'event_id' in filters.equals)
 
-    const finalFilters: ConfirmationsFilter | undefined =
+    const finalFilters: ContactsFilter | undefined =
         shouldScope && event
             ? {
                   ...filters,
@@ -71,31 +66,14 @@ export function useFetchConfirmations(
               }
             : filters
 
-    const advancedOnly = config?.confirmationsWithTransportArrangedOnly ?? false
-    const firstTimersOnly = config?.firstTimersOnly ?? false
     const effectiveEnabled =
         (config?.enabled ?? true) && (!shouldScope || !!event)
 
     return useQuery<Contact[], Error, Contact[], QueryKey>({
-        queryKey: [
-            'confirmations',
-            { filters: finalFilters ?? null, advancedOnly, firstTimersOnly },
-        ],
+        queryKey: ['contacts', finalFilters ?? null],
         queryFn: async () => {
             const supabase = getSupabaseBrowserClient()
             let query = supabase.from('contacts').select('*')
-
-            // Confirmations: confirmed_at IS NOT NULL
-            query = query.not('confirmed_at', 'is', null)
-
-            // Advanced confirmations: also require transport_arranged_at IS NOT NULL
-            if (advancedOnly) {
-                query = query.not('transport_arranged_at', 'is', null)
-            }
-
-            if (firstTimersOnly) {
-                query = query.eq('is_first_time', true)
-            }
 
             if (finalFilters?.equals) {
                 for (const [key, value] of Object.entries(
@@ -150,6 +128,7 @@ export function useFetchConfirmations(
 
             const { data, error } = await query
             if (error) throw error
+
             return data ?? []
         },
         ...(config ?? {}),

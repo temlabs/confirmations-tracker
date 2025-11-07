@@ -131,11 +131,8 @@ export default function App() {
                     Navigation
                 </div>
                 <nav className="mt-3 flex flex-col gap-1">
-                    <NavItem to="/" label="Your Confirmations" />
-                    <NavItem
-                        to="/confirmations"
-                        label="View All Confirmations"
-                    />
+                    <NavItem to="/" label="Your contacts" />
+                    <NavItem to="/contacts" label="All Contacts" />
                     <NavItem to="/live" label="Live Attendance" />
                     <NavItem to="/data" label="Data" />
                     <NavItem to="/members" label="Members" />
@@ -207,12 +204,12 @@ export default function App() {
                         <nav className="flex flex-col gap-1">
                             <NavItem
                                 to="/"
-                                label="Your Confirmations"
+                                label="Your contacts"
                                 onNavigate={() => setIsDrawerOpen(false)}
                             />
                             <NavItem
-                                to="/confirmations"
-                                label="View All Confirmations"
+                                to="/contacts"
+                                label="All Contacts"
                                 onNavigate={() => setIsDrawerOpen(false)}
                             />
                             <NavItem

@@ -1,8 +1,8 @@
 import { useParams } from 'react-router'
 import { useMemo, useState, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useFetchConfirmationById } from '~/src/confirmation/useFetchConfirmationById'
-import { useUpdateConfirmation } from '~/src/confirmation/useUpdateConfirmation'
+import { useFetchContactById } from '~/src/contact/useFetchContactById'
+import { useUpdateContact } from '~/src/contact/useUpdateContact'
 import type { Tables, TablesUpdate } from '~/types/database.types'
 import { useFetchCallsByConfirmation } from '~/src/call/useFetchCallsByConfirmation'
 import { useFetchVisitsByConfirmation } from '~/src/visit/useFetchVisitsByConfirmation'
@@ -15,21 +15,16 @@ import { useDeleteVisit } from '~/src/visit/useDeleteVisit'
 import { useFetchCallOutcomes } from '~/src/call/useFetchCallOutcomes'
 import { useFetchMembers } from '~/src/member/useFetchMembers'
 import { useFetchCurrentMember } from '~/src/member/useFetchCurrentMember'
-import { useFetchConfirmations } from '~/src/confirmation/useFetchConfirmations'
+import { useFetchContacts } from '~/src/contact/useFetchContacts'
 
-type Confirmation = Tables<'confirmations'>
+type Confirmation = Tables<'contacts'>
 
 export const meta = () => [{ title: 'Confirmation Details' }]
 
 export default function ConfirmationDetail() {
     const { id } = useParams()
-    const {
-        data: confirmation,
-        isLoading,
-        error,
-    } = useFetchConfirmationById(id)
-    const { mutateAsync: updateAsync, isPending: updating } =
-        useUpdateConfirmation()
+    const { data: confirmation, isLoading, error } = useFetchContactById(id)
+    const { mutateAsync: updateAsync, isPending: updating } = useUpdateContact()
 
     const { data: calls } = useFetchCallsByConfirmation(id)
     const { data: visits } = useFetchVisitsByConfirmation(id)
@@ -54,13 +49,21 @@ export default function ConfirmationDetail() {
             String(formData.get('contact_number') || '').trim() || null
         const attended = formData.get('attended') === 'on'
         const is_first_time = formData.get('is_first_time') === 'on'
+        const confirmedChecked = formData.get('confirmed_at') === 'on'
+        const transportChecked = formData.get('transport_arranged_at') === 'on'
+        const notes = String(formData.get('notes') || '').trim() || null
         if (!first_name) return
-        const updates: TablesUpdate<'confirmations'> = {
+        const updates: TablesUpdate<'contacts'> = {
             first_name,
             last_name,
             contact_number,
             attended,
             is_first_time,
+            notes,
+            confirmed_at: confirmedChecked ? new Date().toISOString() : null,
+            transport_arranged_at: transportChecked
+                ? new Date().toISOString()
+                : null,
         }
         try {
             await updateAsync({ id: confirmation.id, updates })
@@ -73,7 +76,7 @@ export default function ConfirmationDetail() {
         [calls, visits]
     )
 
-    const { data: eventConfirmations } = useFetchConfirmations(
+    const { data: eventConfirmations } = useFetchContacts(
         confirmation
             ? { equals: { event_id: confirmation.event_id }, limit: 500 }
             : undefined,
@@ -154,6 +157,29 @@ export default function ConfirmationDetail() {
                                 </div>
                                 <div>
                                     <label
+                                        htmlFor="notes"
+                                        className="block text-sm font-medium"
+                                    >
+                                        Notes
+                                    </label>
+                                    {editing ? (
+                                        <textarea
+                                            id="notes"
+                                            name="notes"
+                                            rows={4}
+                                            defaultValue={
+                                                confirmation.notes ?? ''
+                                            }
+                                            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+                                        />
+                                    ) : (
+                                        <div className="mt-1 text-sm whitespace-pre-wrap text-neutral-800 dark:text-neutral-100">
+                                            {confirmation.notes ?? '—'}
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <label
                                         htmlFor="contact_number"
                                         className="block text-sm font-medium"
                                     >
@@ -202,6 +228,40 @@ export default function ConfirmationDetail() {
                                             className="text-sm"
                                         >
                                             First timer?
+                                        </label>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            id="confirmed_at"
+                                            name="confirmed_at"
+                                            type="checkbox"
+                                            defaultChecked={
+                                                !!confirmation.confirmed_at
+                                            }
+                                            disabled={!editing}
+                                        />
+                                        <label
+                                            htmlFor="confirmed_at"
+                                            className="text-sm"
+                                        >
+                                            Confirmed
+                                        </label>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            id="transport_arranged_at"
+                                            name="transport_arranged_at"
+                                            type="checkbox"
+                                            defaultChecked={
+                                                !!confirmation.transport_arranged_at
+                                            }
+                                            disabled={!editing}
+                                        />
+                                        <label
+                                            htmlFor="transport_arranged_at"
+                                            className="text-sm"
+                                        >
+                                            Transport arranged
                                         </label>
                                     </div>
                                 </div>
@@ -532,7 +592,7 @@ function AddEventModal({
     outcomes: Array<Tables<'call_outcomes'>>
     members: Array<Tables<'members'>>
     currentMemberId: string | null
-    confirmations: Array<Tables<'confirmations'>>
+    confirmations: Array<Tables<'contacts'>>
     onClose: () => void
     onSelectType: (t: 'call' | 'visit') => void
     type: '' | 'call' | 'visit'
@@ -554,7 +614,7 @@ function AddEventModal({
             const call_timestamp = String(fd.get('call_timestamp') || '')
             if (!caller_member_id || !call_timestamp) return
             await createCall({
-                callee_confirmation_id: confirmationId,
+                callee_contact_id: confirmationId,
                 caller_member_id,
                 call_timestamp,
                 outcome_id: outcome_id || null,
@@ -786,7 +846,7 @@ function EditCallModal({
     async function onDelete() {
         await deleteCall({
             id: call.id,
-            confirmationId: call.callee_confirmation_id,
+            confirmationId: call.callee_contact_id,
         })
         onClose()
     }
@@ -916,7 +976,7 @@ function EditVisitModal({
     visitId: string
     visits: any[]
     members: Array<Tables<'members'>>
-    confirmations: Array<Tables<'confirmations'>>
+    confirmations: Array<Tables<'contacts'>>
     confirmationId: string
     onClose: () => void
 }) {
@@ -1019,9 +1079,9 @@ function EditVisitModal({
                 const toInsert = [
                     confirmationId,
                     ...Array.from(selectedVisitees),
-                ].map((confirmation_id) => ({
+                ].map((contact_id) => ({
                     visit_id: visit!.id,
-                    confirmation_id,
+                    contact_id,
                 }))
                 await supabase.from('visit_visitees').insert(toInsert)
             })
@@ -1317,7 +1377,7 @@ function VisiteesTypeahead({
     initial = [] as Array<{ id: string; label: string }>,
 }: {
     name: string
-    allConfirmations: Array<Tables<'confirmations'>>
+    allConfirmations: Array<Tables<'contacts'>>
     excludeIds?: string[]
     initial?: Array<{ id: string; label: string }>
 }) {

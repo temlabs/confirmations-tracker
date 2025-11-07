@@ -1,26 +1,26 @@
 import type { Tables } from '~/types/database.types'
 
-type Confirmation = Tables<'confirmations'>
+type Contact = Tables<'contacts'>
 
-export type ConfirmationListItemProps = {
-    confirmation: Confirmation
+export type ContactListItemProps = {
+    contact: Contact
     byline?: string
     onPress?: () => void
     onEdit?: () => void
 }
 
-export function ConfirmationListItem({
-    confirmation,
+export function ContactListItem({
+    contact,
     byline,
     onPress,
     onEdit,
-}: ConfirmationListItemProps) {
-    const fullName = confirmation.last_name
-        ? `${confirmation.first_name} ${confirmation.last_name}`
-        : confirmation.first_name
-    const attended = confirmation.attended
-    const isFirstTime = confirmation.is_first_time
-    const createdAt = new Date(confirmation.created_at)
+}: ContactListItemProps) {
+    const fullName = contact.last_name
+        ? `${contact.first_name} ${contact.last_name}`
+        : contact.first_name
+    const attended = contact.attended
+    const isFirstTime = contact.is_first_time
+    const createdAt = new Date(contact.created_at)
     const createdLabel = createdAt.toLocaleString()
 
     return (
@@ -41,9 +41,9 @@ export function ConfirmationListItem({
                 <div className="text-sm font-medium dark:text-neutral-100">
                     {fullName}
                 </div>
-                {confirmation.contact_number ? (
+                {contact.contact_number ? (
                     <div className="text-xs text-neutral-500">
-                        {confirmation.contact_number}
+                        {contact.contact_number}
                     </div>
                 ) : null}
                 {byline ? (
@@ -69,11 +69,10 @@ export function ConfirmationListItem({
                             e.stopPropagation()
                             onEdit()
                         }}
-                        aria-label="Edit confirmation"
+                        aria-label="Edit contact"
                         title="Edit"
                         className="rounded-md p-1 text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
                     >
-                        {/* Pencil icon */}
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="16"

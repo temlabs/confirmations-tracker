@@ -28,7 +28,7 @@ export function useUpdateCall() {
             qc.invalidateQueries({
                 queryKey: [
                     'calls',
-                    { confirmationId: data.callee_confirmation_id },
+                    { confirmationId: (data as any).callee_contact_id },
                 ],
             })
         },

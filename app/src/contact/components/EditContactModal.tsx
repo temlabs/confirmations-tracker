@@ -1,21 +1,15 @@
 import { useLocation, useNavigate } from 'react-router'
-import { useUpdateConfirmation } from '~/src/confirmation/useUpdateConfirmation'
-import { useDeleteConfirmation } from '~/src/confirmation/useDeleteConfirmation'
+import { useUpdateContact } from '~/src/contact/useUpdateContact'
+import { useDeleteContact } from '~/src/contact/useDeleteContact'
 import type { Tables, TablesUpdate } from '~/types/database.types'
 
-type Confirmation = Tables<'confirmations'>
+type Contact = Tables<'contacts'>
 
-export function EditConfirmationModal({
-    confirmation,
-}: {
-    confirmation: Confirmation
-}) {
+export function EditContactModal({ contact }: { contact: Contact }) {
     const navigate = useNavigate()
     const location = useLocation()
-    const { mutateAsync: updateAsync, isPending: updating } =
-        useUpdateConfirmation()
-    const { mutateAsync: deleteAsync, isPending: deleting } =
-        useDeleteConfirmation()
+    const { mutateAsync: updateAsync, isPending: updating } = useUpdateContact()
+    const { mutateAsync: deleteAsync, isPending: deleting } = useDeleteContact()
 
     const close = () => {
         const params = new URLSearchParams(location.search)
@@ -33,23 +27,33 @@ export function EditConfirmationModal({
             String(formData.get('contact_number') || '').trim() || null
         const attended = formData.get('attended') === 'on'
         const is_first_time = formData.get('is_first_time') === 'on'
+        const confirmedChecked = formData.get('confirmed_at') === 'on'
+        const transportChecked = formData.get('transport_arranged_at') === 'on'
+        const notes = String(formData.get('notes') || '').trim() || null
         if (!first_name) return
         try {
-            const updates: TablesUpdate<'confirmations'> = {
+            const updates: TablesUpdate<'contacts'> = {
                 first_name,
                 last_name,
                 contact_number,
                 attended,
                 is_first_time,
+                notes,
+                confirmed_at: confirmedChecked
+                    ? new Date().toISOString()
+                    : null,
+                transport_arranged_at: transportChecked
+                    ? new Date().toISOString()
+                    : null,
             }
-            await updateAsync({ id: confirmation.id, updates })
+            await updateAsync({ id: contact.id, updates })
             close()
         } catch {}
     }
 
     async function onDelete() {
         try {
-            await deleteAsync(confirmation.id)
+            await deleteAsync(contact.id)
             close()
         } catch {}
     }
@@ -63,7 +67,7 @@ export function EditConfirmationModal({
             />
             <div className="relative w-full max-w-md rounded-md border border-neutral-200 bg-white p-4 shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">Edit Confirmation</h2>
+                    <h2 className="text-lg font-semibold">Edit contact</h2>
                     <button
                         type="button"
                         onClick={close}
@@ -84,7 +88,7 @@ export function EditConfirmationModal({
                             <input
                                 id="first_name"
                                 name="first_name"
-                                defaultValue={confirmation.first_name}
+                                defaultValue={contact.first_name}
                                 required
                                 className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
                             />
@@ -99,7 +103,7 @@ export function EditConfirmationModal({
                             <input
                                 id="last_name"
                                 name="last_name"
-                                defaultValue={confirmation.last_name ?? ''}
+                                defaultValue={contact.last_name ?? ''}
                                 className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
                             />
                         </div>
@@ -114,8 +118,23 @@ export function EditConfirmationModal({
                         <input
                             id="contact_number"
                             name="contact_number"
-                            defaultValue={confirmation.contact_number ?? ''}
+                            defaultValue={contact.contact_number ?? ''}
                             className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+                        />
+                    </div>
+                    <div>
+                        <label
+                            htmlFor="notes"
+                            className="block text-sm font-medium"
+                        >
+                            Notes
+                        </label>
+                        <textarea
+                            id="notes"
+                            name="notes"
+                            rows={4}
+                            defaultValue={contact.notes ?? ''}
+                            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
                         />
                     </div>
                     <div className="space-y-2">
@@ -124,7 +143,7 @@ export function EditConfirmationModal({
                                 id="attended"
                                 name="attended"
                                 type="checkbox"
-                                defaultChecked={confirmation.attended}
+                                defaultChecked={contact.attended}
                             />
                             <label htmlFor="attended" className="text-sm">
                                 Attended
@@ -135,10 +154,35 @@ export function EditConfirmationModal({
                                 id="is_first_time"
                                 name="is_first_time"
                                 type="checkbox"
-                                defaultChecked={confirmation.is_first_time}
+                                defaultChecked={contact.is_first_time}
                             />
                             <label htmlFor="is_first_time" className="text-sm">
                                 First timer?
+                            </label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                id="confirmed_at"
+                                name="confirmed_at"
+                                type="checkbox"
+                                defaultChecked={!!contact.confirmed_at}
+                            />
+                            <label htmlFor="confirmed_at" className="text-sm">
+                                Confirmed
+                            </label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                id="transport_arranged_at"
+                                name="transport_arranged_at"
+                                type="checkbox"
+                                defaultChecked={!!contact.transport_arranged_at}
+                            />
+                            <label
+                                htmlFor="transport_arranged_at"
+                                className="text-sm"
+                            >
+                                Transport arranged
                             </label>
                         </div>
                     </div>

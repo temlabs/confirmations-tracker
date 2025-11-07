@@ -47,7 +47,7 @@ export function IdentityHeader({
                 </h2>
                 {eventName ? (
                     <p className="text-xs text-neutral-600 mt-1 dark:text-neutral-400">
-                        You are viewing and adding confirmations for the{' '}
+                        You are viewing and adding contacts for the{' '}
                         <strong>{eventName}</strong> event
                         {eventSuffix ?? ''}.
                     </p>

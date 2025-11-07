@@ -45,13 +45,13 @@ export function useCreateVisit() {
                     .insert([
                         {
                             visit_id: created.id,
-                            confirmation_id: visiteeConfirmationId,
+                            contact_id: visiteeConfirmationId,
                         },
                         ...extraVisiteeIds
                             .filter((x) => x && x !== visiteeConfirmationId)
-                            .map((confirmation_id) => ({
+                            .map((contact_id) => ({
                                 visit_id: created.id,
-                                confirmation_id,
+                                contact_id,
                             })),
                     ])
                 if (veErr) throw veErr

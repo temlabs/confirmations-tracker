@@ -2,9 +2,10 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { useFetchCurrentEvent } from '~/src/event/useFetchCurrentEvent'
 import { useFetchEvents } from '~/src/event/useFetchEvents'
+import { useFetchContacts } from '~/src/contact/useFetchContacts'
 import { useFetchConfirmations } from '~/src/confirmation/useFetchConfirmations'
 import { AttendanceProportionByBacentaBarChart } from '../src/components/charts/AttendanceProportionByBacentaBarChart'
-import { ConfirmationListItem } from '~/src/confirmation/components/ConfirmationListItem'
+import { ContactListItem } from '~/src/contact/components/ContactListItem'
 
 export const meta = () => [{ title: 'Live Attendance' }]
 
@@ -17,20 +18,20 @@ export default function LiveAttendance() {
         { enabled: !!event, refetchInterval: 10000 }
     )
 
-    const { data: allConfirmations } = useFetchConfirmations(
-        event
-            ? {
-                  equals: { event_id: event.id },
-              }
-            : undefined,
-        { enabled: !!event, refetchInterval: 10000 }
+    const { data: advancedConfirmations } = useFetchConfirmations(
+        event ? { equals: { event_id: event.id } } : undefined,
+        {
+            enabled: !!event,
+            refetchInterval: 10000,
+            confirmationsWithTransportArrangedOnly: true,
+        }
     )
 
     const {
         data: attendedConfirmations,
         isLoading: attendedLoading,
         error: attendedError,
-    } = useFetchConfirmations(
+    } = useFetchContacts(
         event
             ? {
                   equals: { event_id: event.id, attended: true },
@@ -40,7 +41,7 @@ export default function LiveAttendance() {
     )
 
     // Just arrived: last 5 confirmations that are attended, ordered by created_at DESC
-    const { data: recentAttended } = useFetchConfirmations(
+    const { data: recentAttended } = useFetchContacts(
         event
             ? {
                   equals: { event_id: event.id, attended: true },
@@ -55,7 +56,7 @@ export default function LiveAttendance() {
         if (loaded && !event) navigate('/identity', { replace: true })
     }, [loaded, event, navigate])
 
-    const total = allConfirmations?.length ?? 0
+    const total = advancedConfirmations?.length ?? 0
     const attendedTotal = attendedConfirmations?.length ?? 0
     const percent =
         total > 0 ? Math.min(100, Math.round((attendedTotal / total) * 100)) : 0
@@ -131,7 +132,7 @@ export default function LiveAttendance() {
                                 type="button"
                                 className="text-sm font-medium text-blue-700 underline dark:text-blue-300"
                                 onClick={() =>
-                                    navigate('/confirmations?attended=true')
+                                    navigate('/contacts?attended=true')
                                 }
                             >
                                 See all
@@ -149,10 +150,7 @@ export default function LiveAttendance() {
                     ) : (
                         <ul className="mt-2 divide-y divide-neutral-100 dark:divide-neutral-800">
                             {recentAttended!.map((c) => (
-                                <ConfirmationListItem
-                                    key={c.id}
-                                    confirmation={c}
-                                />
+                                <ContactListItem key={c.id} contact={c} />
                             ))}
                         </ul>
                     )}

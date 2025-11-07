@@ -6,24 +6,24 @@ import {
 import { getSupabaseBrowserClient } from '~/lib/supabase.client'
 import type { Tables } from '~/types/database.types'
 
-type Confirmation = Tables<'confirmations'>
+type Contact = Tables<'contacts'>
 
-export function useFetchConfirmationById(
+export function useFetchContactById(
     id: string | null | undefined
-): UseQueryResult<Confirmation | null, Error> {
-    return useQuery<Confirmation | null, Error, Confirmation | null, QueryKey>({
-        queryKey: ['confirmation', id ?? null],
+): UseQueryResult<Contact | null, Error> {
+    return useQuery<Contact | null, Error, Contact | null, QueryKey>({
+        queryKey: ['contact', id ?? null],
         enabled: !!id,
         queryFn: async () => {
             if (!id) return null
             const supabase = getSupabaseBrowserClient()
             const { data, error } = await supabase
-                .from('confirmations')
+                .from('contacts')
                 .select('*')
                 .eq('id', id)
                 .single()
             if (error) throw error
-            return (data as Confirmation) ?? null
+            return (data as Contact) ?? null
         },
     })
 }
