@@ -204,7 +204,7 @@ export default function App() {
                         <nav className="flex flex-col gap-1">
                             <NavItem
                                 to="/"
-                                label="Your contacts"
+                                label="Your Contacts"
                                 onNavigate={() => setIsDrawerOpen(false)}
                             />
                             <NavItem
