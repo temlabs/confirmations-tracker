@@ -128,6 +128,67 @@ export default function Data() {
         }
     }
 
+    const formatAttendanceTargetsText = () => {
+        if (!event || !bacentaTargets || !eventMembers) return ''
+
+        const now = new Date()
+        const dateStr = now.toLocaleDateString('en-GB')
+        const timeStr = now.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        })
+
+        let text = `*${event.name} Attendance Targets*\n_As of ${dateStr} at ${timeStr}_\n\n`
+
+        const membersByBacenta = new Map<string, typeof eventMembers>()
+        eventMembers.forEach((member) => {
+            const bacentaName = member.bacenta_name
+            if (bacentaName) {
+                if (!membersByBacenta.has(bacentaName)) {
+                    membersByBacenta.set(bacentaName, [])
+                }
+                membersByBacenta.get(bacentaName)!.push(member)
+            }
+        })
+
+        bacentaTargets.forEach((bacenta) => {
+            const bacentaName = bacenta.bacenta_name || 'Unknown Bacenta'
+            const bacentaAttendanceTarget = bacenta.attendance_target || 0
+
+            text += `*${bacentaName} - ${bacentaAttendanceTarget}*\n`
+
+            const bacentaMembers = membersByBacenta.get(bacentaName) || []
+            bacentaMembers.forEach((member, index) => {
+                const memberName = member.member_full_name || 'Unknown Member'
+                const memberAttendanceTarget = member.attendance_target || 0
+                text += `${index + 1}. ${memberName} - ${memberAttendanceTarget}\n`
+            })
+
+            text += '\n'
+        })
+
+        const totalAttendanceTarget = bacentaTargets.reduce(
+            (sum, b) => sum + (b.attendance_target || 0),
+            0
+        )
+        text += `*Total - ${totalAttendanceTarget}*`
+        return text
+    }
+
+    const [copyTargetsSuccess, setCopyTargetsSuccess] = useState(false)
+    const handleCopyAttendanceTargets = async () => {
+        const text = formatAttendanceTargetsText()
+        if (!text) return
+        try {
+            await navigator.clipboard.writeText(text)
+            setCopyTargetsSuccess(true)
+            setTimeout(() => setCopyTargetsSuccess(false), 2000)
+        } catch (err) {
+            console.error('Failed to copy targets to clipboard:', err)
+        }
+    }
+
     const current = data?.[0]
     const confTotal = confirmations?.length ?? 0
     const confTarget = current?.total_confirmations_target ?? 0
@@ -140,33 +201,63 @@ export default function Data() {
             <div className="container mx-auto">
                 <div className="flex items-center justify-between">
                     <h1 className="text-xl font-semibold">Event Data</h1>
-                    <button
-                        onClick={handleCopyToWhatsApp}
-                        disabled={
-                            !event ||
-                            !bacentaTargets ||
-                            !eventMembers ||
-                            !confirmations
-                        }
-                        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90 disabled:bg-neutral-400 disabled:cursor-not-allowed"
-                        style={{ backgroundColor: '#669468' }}
-                    >
-                        <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleCopyToWhatsApp}
+                            disabled={
+                                !event ||
+                                !bacentaTargets ||
+                                !eventMembers ||
+                                !confirmations
+                            }
+                            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90 disabled:bg-neutral-400 disabled:cursor-not-allowed"
+                            style={{ backgroundColor: '#669468' }}
                         >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                            />
-                        </svg>
-                        {copySuccess ? 'Copied!' : 'Copy to WhatsApp'}
-                    </button>
+                            <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                />
+                            </svg>
+                            {copySuccess
+                                ? 'Copied!'
+                                : 'Copy confirmation targets'}
+                        </button>
+                        <button
+                            onClick={handleCopyAttendanceTargets}
+                            disabled={
+                                !event || !bacentaTargets || !eventMembers
+                            }
+                            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90 disabled:bg-neutral-400 disabled:cursor-not-allowed"
+                            style={{ backgroundColor: '#577F9F' }}
+                        >
+                            <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                />
+                            </svg>
+                            {copyTargetsSuccess
+                                ? 'Copied!'
+                                : 'Copy attendance targets'}
+                        </button>
+                    </div>
                 </div>
                 <section className="mt-4 rounded-md border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
                     {!event ? (
