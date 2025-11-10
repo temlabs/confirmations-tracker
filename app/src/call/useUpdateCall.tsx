@@ -25,12 +25,15 @@ export function useUpdateCall() {
             return data as Call
         },
         onSuccess: (data) => {
+            // Invalidate calls for specific confirmation (detail views)
             qc.invalidateQueries({
                 queryKey: [
                     'calls',
                     { confirmationId: (data as any).callee_contact_id },
                 ],
             })
+            // Invalidate all calls lists (e.g., Telepastoring aggregates)
+            qc.invalidateQueries({ queryKey: ['calls'] })
         },
     })
 }

@@ -18,6 +18,7 @@ export function useCreateCall() {
             return data as Call
         },
         onSuccess: (_data, variables) => {
+            // Invalidate calls for specific confirmation (detail views)
             qc.invalidateQueries({
                 queryKey: [
                     'calls',
@@ -28,6 +29,8 @@ export function useCreateCall() {
                     },
                 ],
             })
+            // Invalidate all calls lists (e.g., Telepastoring aggregates)
+            qc.invalidateQueries({ queryKey: ['calls'] })
         },
     })
 }

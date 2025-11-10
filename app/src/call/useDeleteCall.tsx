@@ -17,7 +17,10 @@ export function useDeleteCall() {
             return { id, confirmationId }
         },
         onSuccess: ({ confirmationId }) => {
+            // Invalidate calls for specific confirmation (detail views)
             qc.invalidateQueries({ queryKey: ['calls', { confirmationId }] })
+            // Invalidate all calls lists (e.g., Telepastoring aggregates)
+            qc.invalidateQueries({ queryKey: ['calls'] })
         },
     })
 }

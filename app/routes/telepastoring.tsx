@@ -7,6 +7,7 @@ import { ContactListItem } from '~/src/contact/components/ContactListItem'
 import { TelepastoringFilterModal } from '~/src/telepastoring/TelepastoringFilterModal'
 import { useFetchCalls } from '~/src/call/useFetchCalls'
 import { useFetchBacentas } from '~/src/bacenta/useFetchBacentas'
+import { useFetchCallOutcomes } from '~/src/call/useFetchCallOutcomes'
 
 export const meta = () => [{ title: 'Telepastoring' }]
 
@@ -89,6 +90,29 @@ export default function Telepastoring() {
             return undefined
         }
     }, [toDt])
+
+    // Calls for distribution (ignore outcome filter to show full breakdown)
+    const { data: callsForDistribution } = useFetchCalls(
+        {
+            in:
+                memberIds.length > 0
+                    ? { caller_member_id: memberIds }
+                    : undefined,
+            range:
+                callFromIso || callToIso
+                    ? {
+                          call_timestamp: {
+                              ...(callFromIso ? { gte: callFromIso } : {}),
+                              ...(callToIso ? { lte: callToIso } : {}),
+                          },
+                      }
+                    : undefined,
+            orderBy: { column: 'call_timestamp', ascending: false },
+            limit: 5000,
+        },
+        { enabled: !!event }
+    )
+    const { data: outcomes } = useFetchCallOutcomes()
 
     const {
         data: callsData,
@@ -195,6 +219,101 @@ export default function Telepastoring() {
 
     const isLoading = contactsLoading || callsLoading
     const error = contactsError || callsError
+
+    // Outcome distribution across pool contacts
+    const distribution = useMemo(() => {
+        if (!contactsData) return null
+        const pool = contactsData
+        const total = pool.length
+        if (total === 0) {
+            return {
+                total,
+                segments: [] as { key: string; label: string; count: number }[],
+            }
+        }
+        // Build latest call per contact (within timeframe and caller selection)
+        const latestByContact = new Map<
+            string,
+            NonNullable<typeof callsForDistribution>[number]
+        >()
+        if (callsForDistribution) {
+            for (const call of callsForDistribution) {
+                const cid = call.callee_contact_id
+                if (!cid) continue
+                if (!latestByContact.has(cid)) {
+                    latestByContact.set(cid, call)
+                }
+            }
+        }
+        const counts = new Map<string, number>()
+        let nonContacted = 0
+        for (const c of pool) {
+            const last = latestByContact.get(c.id)
+            if (!last) {
+                nonContacted++
+                continue
+            }
+            const key = last.outcome_id ?? 'no_outcome'
+            counts.set(key, (counts.get(key) ?? 0) + 1)
+        }
+        // Order outcomes by description
+        const ordered =
+            (outcomes ?? [])
+                .slice()
+                .sort((a, b) => a.description.localeCompare(b.description)) ||
+            []
+        const segments: { key: string; label: string; count: number }[] = []
+        for (const o of ordered) {
+            segments.push({
+                key: o.id,
+                label: o.description,
+                count: counts.get(o.id) ?? 0,
+            })
+        }
+        const noOutcomeCount = counts.get('no_outcome') ?? 0
+        if (noOutcomeCount > 0) {
+            segments.push({
+                key: 'no_outcome',
+                label: 'No outcome',
+                count: noOutcomeCount,
+            })
+        }
+        segments.push({
+            key: 'non_contacted',
+            label: 'Not contacted',
+            count: nonContacted,
+        })
+        return { total, segments }
+    }, [contactsData, callsForDistribution, outcomes])
+
+    function colorForIndex(index: number): string {
+        const palette = [
+            '#3b82f6', // blue-500
+            '#22c55e', // green-500
+            '#f59e0b', // amber-500
+            '#ef4444', // red-500
+            '#a855f7', // purple-500
+            '#06b6d4', // cyan-500
+            '#e11d48', // rose-600
+            '#84cc16', // lime-500
+            '#f97316', // orange-500
+            '#10b981', // emerald-500
+        ]
+        return palette[index % palette.length]
+    }
+    // Stable color map for segments so legend and bar match even if zero-count segments are hidden in the bar
+    const segmentColorMap = useMemo(() => {
+        const map = new Map<string, string>()
+        if (!distribution) return map
+        distribution.segments.forEach((s, i) => {
+            if (s.key === 'non_contacted')
+                map.set(s.key, '#9ca3af') // gray-400
+            else if (s.key === 'no_outcome')
+                map.set(s.key, '#94a3b8') // slate-400
+            else map.set(s.key, colorForIndex(i))
+        })
+        return map
+    }, [distribution])
 
     // Copy-to-clipboard
     const [copySuccess, setCopySuccess] = useState(false)
@@ -412,6 +531,54 @@ export default function Telepastoring() {
                         ) : null}
                     </div>
                 </section>
+
+                {/* Outcome distribution bar */}
+                {event && distribution && distribution.total > 0 ? (
+                    <section className="mt-4 rounded-md border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                        <div className="h-3 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800 flex">
+                            {distribution.segments
+                                .filter((s) => s.count > 0)
+                                .map((s, i) => {
+                                    const width =
+                                        (s.count / distribution.total) * 100
+                                    return (
+                                        <div
+                                            key={s.key}
+                                            className="h-full"
+                                            style={{
+                                                width: `${width}%`,
+                                                backgroundColor:
+                                                    segmentColorMap.get(
+                                                        s.key
+                                                    ) ?? '#e5e7eb',
+                                            }}
+                                            title={`${s.label}: ${s.count}`}
+                                        />
+                                    )
+                                })}
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-3">
+                            {distribution.segments.map((s, i) => (
+                                <div
+                                    key={s.key}
+                                    className="flex items-center gap-2 text-xs"
+                                >
+                                    <span
+                                        className="inline-block h-3 w-3 rounded-sm border border-neutral-300 dark:border-neutral-700"
+                                        style={{
+                                            backgroundColor:
+                                                segmentColorMap.get(s.key) ??
+                                                '#e5e7eb',
+                                        }}
+                                    />
+                                    <span className="text-neutral-700 dark:text-neutral-300">
+                                        {s.label} ({s.count})
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                ) : null}
 
                 <section className="mt-4 rounded-md border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
                     {!event ? (
