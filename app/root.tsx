@@ -133,6 +133,7 @@ export default function App() {
                 <nav className="mt-3 flex flex-col gap-1">
                     <NavItem to="/" label="Your Contacts" />
                     <NavItem to="/contacts" label="All Contacts" />
+                    <NavItem to="/telepastoring" label="Telepastoring" />
                     <NavItem to="/live" label="Live Attendance" />
                     <NavItem to="/data" label="Data" />
                     <NavItem to="/members" label="Members" />
@@ -210,6 +211,11 @@ export default function App() {
                             <NavItem
                                 to="/contacts"
                                 label="All Contacts"
+                                onNavigate={() => setIsDrawerOpen(false)}
+                            />
+                            <NavItem
+                                to="/telepastoring"
+                                label="Telepastoring"
                                 onNavigate={() => setIsDrawerOpen(false)}
                             />
                             <NavItem
